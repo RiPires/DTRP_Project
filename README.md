@@ -3,5 +3,7 @@ This is the repository for the development of the DTRP project
 
 "terPro Code" is the original version of the example project, built in MATLAB.
 "teraPro para Octave" is the original version of the example project, built in Octave.
-"octaveDTRP" is my adaptation of the "teraPro Code" to OCTAVE language.
 
+The folder Tests contains scripts for testing functionalities:
+  
+  AddMatrix.m (works in both MATLAB and Octave)
