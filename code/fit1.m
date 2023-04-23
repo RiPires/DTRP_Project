@@ -1,131 +1,109 @@
+% CSV files
+%Liang,Dawson,SeongH,SeongM,SeongL
+file_names = {'datafiles/SR_EQ1_L.csv','datafiles/SR_EQ1_D.csv',...
+    'datafiles/SR_EQ1_SH.csv','datafiles/SR_EQ1_SM.csv','datafiles/SR_EQ1_SL.csv'};
+% Data from the files:
+%x (tau) - elapsed time in months
+%y (SR) - survival rate in percentage
+N = [128, 35, 83, 51, 24]; %N - number of patients
+d = [4.88, 1.5, 1.8, 1.8, 1.8]; %d - dose per fraction Gy/fx
+D = [53.6, 61.5, 55, 45, 32.5]; %D - prescription dose Gy
+T_day = [28, 42, 37, 37, 37]; %T_day - treatment time in days
+T_month = zeros(size(T_day)); %T_month  - treatment time in months
+for i = 1:length(T_day)
+    tm = T_day(i)/30;
+    T_month(i) = tm;
+end    
+%v - vector with parameters to find   
+    %v(1) - K 
+    %v(2) - alpha Gy^-1
+    %v(3) - beta Gy^-2
+    %v(4) - gamma days^-1
+    %v(5) - a months^-1
+    %v(6) - delta 
 
-%load data from the CSV files
-data = readmatrix('datafiles/all_data_fit1.csv');
+% Initial parameter values - defined by the user
+v0 = [0.042, 0.037, 0.002587, 0.00608, 1268, 0.16];
 
-%variables
-%x->tau (elapsed time)
-%y->SR (survival rate)
-%T->treatment time in days
-%d->dose per fraction
-%D->prescription dose
-%A->author
-    %0-Liang
-    %1-Dawson
-    %2-SeongH
-    %3-SeongM
-    %4-SeongL
+% Define the parameter bounds
+lb = [0, 0, 0, 0, 1000, 0];
+ub = [0.05, 0.05, 0.003, 0.007, 1500, 0.30];
 
-x = data(:,1);  
-y = data(:,2);
-T = data(:,3);  
-d = data(:,4);
-D = data(:,5);  
-A = data(:,6);
+% Define the fitting function
+f = @(x,v,d,D,T_day,T_month) real(100*exp(-v(1).*exp(-(v(2).*(1+(d./(v(2)./v(3)))).*D - v(4).*T_day - (v(5).*(x-T_month)).^v(6)))));
 
+% Define the combined chi-square function
+chi2 = @(v)...
+residuals(file_names{1}, N(1), d(1), D(1), T_day(1), T_month(1), v, f) ... 
++ residuals(file_names{2}, N(2), d(2), D(2), T_day(2), T_month(2), v, f) ...
++ residuals(file_names{3}, N(3), d(3), D(3), T_day(3), T_month(3), v, f) ...
++ residuals(file_names{4}, N(4), d(4), D(4), T_day(4), T_month(4), v, f) ...
++ residuals(file_names{5}, N(5), d(5), D(5), T_day(5), T_month(5), v, f);
 
-%function
-%f = @(v,x,T,d,D) real(100* exp(-v(1)*exp(-(v(2)*(1+(d/(v(2)/v(3))))*D - v(4)*T - (v(5)*(x-T)).^v(6)))));
-f = @(v,x,T,d,D) real(100*exp(-v(1).*exp(-(v(2).*(1+(d./(v(2)./v(3)))).*D - v(4).*T - (v(5).*(x-T)).^v(6)))));
-%v - vector with parameters    
-    %v(1) - K
-    %v(2) - alpha
-    %v(3) - beta
-    %v(4) - gamma
-    %v(5) - a
-    %v(6) - delta
+% Set up the algorithm options
+%options = optimoptions('ga', 'PopulationSize', 10, 'MaxGenerations', 1000);
+options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9);
 
-%initial parameter values
-%v0 = [0.042, 0.037, 0.0026, 0.006, 1268, 0.16];
-v0 = [1, 1, 1, 1, 1, 1];
+% Run the algorithm
+%v_min = ga(chi2, 6, [], [], [], [], lb, ub, [], options);
+v_min = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
 
-%[fit_result,resnorm,residual,exitflag,output,~,J] = lsqcurvefit(f_Liang, v0, x_Liang, y_Liang);
+% Display the results
+disp('Parameters values of that minimize the sum of squares:'); 
+disp(['K: ' num2str(v_min(1))]);
+disp(['alpha: ' num2str(v_min(2))]);
+disp(['beta: ' num2str(v_min(3))]);
+disp(['gamma: ' num2str(v_min(4))]);
+disp(['a: ' num2str(v_min(5))]);
+disp(['delta: ' num2str(v_min(6))]);
 
-%fit_result = lsqcurvefit(f,v0,x,y);
-f2 = @(v,x) f(v,x,T,d,D);
-%fit_result->vector with the new values for the parameters
-fit_result = lsqcurvefit(f2, v0, x, y);
-display(fit_result);
-
-%covariance matrix of the parameters
-%covariance_matrix = (J'*J)^-1 * resnorm/(length(y_Liang)-length(fit));
-
-%standard deviation of each parameter
-%std_deviation = sqrt(diag(covariance_matrix));
-
-%parameter values and uncertainties
-%disp('parameters:');
-%disp('K:');
-%disp(fit_result(1));
-%disp('alpha:');
-%disp(fit_result(2));
-%disp('beta:');
-%disp(fit_result(3));
-%disp('gamma:');
-%disp(fit_result(4));
-%disp('delta:');
-%disp(fit_result(5));
-
-%store the values in different lists according to the authors
-Liang_data_x = [];
-Dawson_data_x = [];
-SeongH_data_x = [];
-SeongM_data_x = [];
-SeongL_data_x = [];
-
-Liang_data_y = [];
-Dawson_data_y = [];
-SeongH_data_y = [];
-SeongM_data_y = [];
-SeongL_data_y = [];
-
-Liang_fit = [];
-Dawson_fit = [];
-SeongH_fit = [];
-SeongM_fit = [];
-SeongL_fit = [];
-
-for i = 1:length(A)
-    if A(i) == 0
-        Liang_data_x(end+1) = x(i);
-        Liang_data_y(end+1) = y(i);
-        Liang_fit(end+1) = f(fit_result,x(i),T(i),d(i),D(i));
-    elseif A(i) == 1
-        Dawson_data_x(end+1) = x(i);
-        Dawson_data_y(end+1) = y(i);
-        Dawson_fit(end+1) = f(fit_result,x(i),T(i),d(i),D(i));
-    elseif A(i) == 2
-        SeongH_data_x(end+1) = x(i);
-        SeongH_data_y(end+1) = y(i);
-        SeongH_fit(end+1) = f(fit_result,x(i),T(i),d(i),D(i));
-    elseif A(i) == 3
-        SeongM_data_x(end+1) = x(i);
-        SeongM_data_y(end+1) = y(i);
-        SeongM_fit(end+1) = f(fit_result,x(i),T(i),d(i),D(i));
-    elseif A(i) == 4
-        SeongL_data_x(end+1) = x(i);
-        SeongL_data_y(end+1) = y(i);
-        SeongL_fit(end+1) = f(fit_result,x(i),T(i),d(i),D(i));
-    end
-end
-
-%disp('uncertainties:');
-%disp(std_deviation);
-
-
-%plotting the different points
+% Plotting
 hold on
-plot(Liang_data_x, Liang_data_y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 6, 'DisplayName', 'Liang')
-plot(Dawson_data_x, Dawson_data_y, 'o', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 6, 'DisplayName', 'Dawson')
-plot(SeongH_data_x, SeongH_data_y, '^', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 6, 'DisplayName', 'SeongH')
-plot(SeongM_data_x, SeongM_data_y, 's', 'LineWidth', 2, 'Color', '#FD6C6D','MarkerSize', 6, 'DisplayName', 'SeongM')
-plot(SeongL_data_x, SeongL_data_y, 'o', 'LineWidth', 2, 'Color', '#46FD4B','MarkerSize', 6, 'DisplayName', 'SeongL')
+x_points = linspace(0, 70, 71);
+% Liang
+data = load(file_names{1});
+x = data(:, 1);
+y = data(:, 2);
+%original points
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 6, 'DisplayName', 'Liang')
+%fitted function   
+plot(x_points, f(x_points,v_min,d(1),D(1),T_day(1),T_month(1)), '--', 'LineWidth', 2, 'Color', '#FD04FC','HandleVisibility', 'off')
 
-%plotting the different fitting curves
-plot(Liang_data_x, Liang_fit, '--', 'LineWidth', 2, 'Color', '#FD04FC','HandleVisibility', 'off')
-plot(Dawson_data_x, Dawson_fit, '--', 'LineWidth', 2, 'Color', '#0000F7','HandleVisibility', 'off')
-plot(SeongH_data_x, SeongH_fit, '--', 'LineWidth', 2, 'Color', '#000000','HandleVisibility', 'off')
-plot(SeongM_data_x, SeongM_fit, '--', 'LineWidth', 2, 'Color', '#FD6C6D','HandleVisibility', 'off')
-plot(SeongL_data_x, SeongL_fit, '--', 'LineWidth', 2, 'Color', '#46FD4B','HandleVisibility', 'off')
+% Dawson
+data = load(file_names{2});
+x = data(:, 1);
+y = data(:, 2);
+%original points
+plot(x, y, 'o', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 6, 'DisplayName', 'Dawson');
+%fitted function
+plot(x_points, f(x_points,v_min,d(2),D(2),T_day(2),T_month(2)), '--', 'LineWidth', 2, 'Color', '#0000F7','HandleVisibility', 'off');
+
+% SeongH
+data = load(file_names{3});
+x = data(:, 1);
+y = data(:, 2);
+%original points
+plot(x, y, '^', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 6, 'DisplayName', 'SeongH')
+%fitted function
+plot(x_points, f(x_points,v_min,d(3),D(3),T_day(3),T_month(3)), '--', 'LineWidth', 2, 'Color', '#000000','HandleVisibility', 'off')
+
+% SeongM
+data = load(file_names{4});
+x = data(:, 1);
+y = data(:, 2);
+%original points
+plot(x, y, 's', 'LineWidth', 2, 'Color', '#FD6C6D','MarkerSize', 6, 'DisplayName', 'SeongM')
+%fitted function
+plot(x_points, f(x_points,v_min,d(4),D(4),T_day(4),T_month(4)), '--', 'LineWidth', 2, 'Color', '#FD6C6D','HandleVisibility', 'off')
+
+% SeongL
+data = load(file_names{5});
+x = data(:, 1);
+y = data(:, 2);
+%original points
+plot(x, y, 'o', 'LineWidth', 2, 'Color', '#46FD4B','MarkerSize', 6, 'DisplayName', 'SeongL')
+%fitted function
+plot(x_points, f(x_points,v_min,d(5),D(5),T_day(5),T_month(5)), '--', 'LineWidth', 2, 'Color', '#46FD4B','HandleVisibility', 'off')
 
 %legend,lables and title
 legend('Location', 'northeast')
@@ -137,4 +115,16 @@ title('Fit 1')
 %saving the plot
 %saveas(gcf, 'fit1.pdf')
 
-
+function r = residuals(file_name, N, d, D, T_day, T_month, v, f)
+    s = 0;
+    data = load(file_name);
+    x = data(:, 1); %x (tau) - elapsed time in months
+    y = data(:, 2); %y (SR) - survival rate in percentage
+    for i = 1:length(x)
+        y_fit = f(x(i),v,d,D,T_day,T_month);
+        sigma = y(i) .* sqrt(abs((1-y(i)))./N);
+        res = (y_fit - y(i)).^2 / sigma.^2;
+        s = res + s;
+    end
+    r = s;
+end
