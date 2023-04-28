@@ -56,60 +56,26 @@ options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9)
 %v_min = ga(chi2, 6, [], [], [], [], lb, ub, [], options);
 [v_min,fval,exitflag,output,lambda,grad,hessian] = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
 
-% Define the function that returns the fitting parameters
-%fitting_params = @(data, model) fmincon(@(v) sum((data(:,2) - model(data(:,1),v,d_values,D_values,T_day_values,T_month_values)).^2), v0, [], [], [], [], lb, ub, [], options);
-
-% Define the number of bootstraps
-nboot = 1000;
-
-% Initialize the array to store fitting parameters
-params_array = zeros(nboot, 6);
-
-% Perform the bootstraps
-for i = 1:nboot
-    % Randomly select n data points with replacement
-    n = length(xx);
-    indices = randsample(n,n,true);
-    data_boot = [xx(indices) yy(indices)];
-    
-    % Call the fitting function with the bootstrap sample
-    params = v_min(data_boot,f);
-    
-    % Store the fitting parameters in the array
-    params_array(i,:) = params;
+% Uncertainties
+cm = inv(hessian); %cm -> covariance matrix
+un = zeros(size(v_min)); %un -> vector with uncertainties
+d_cm = diag(cm); %d_cm -> diagonal of the covariance matrix
+for i = 1:length(un)
+    un(i) = sqrt(d_cm(i));
 end
 
-% Calculate the mean and standard deviation of the fitting parameters
-params_mean = mean(params_array);
-params_std = std(params_array);
-
 % Display the results
-disp('Parameters values of that minimize the sum of squares (mean ± std):'); 
-disp(['K: ', num2str(params_mean(1)), ' ± ', num2str(params_std(1))]);
-disp(['alpha: ', num2str(params_mean(2)), ' ± ', num2str(params_std(2))]);
-disp(['beta: ', num2str(params_mean(3)), ' ± ', num2str(params_std(3))]);
-disp(['gamma: ', num2str(params_mean(4)), ' ± ', num2str(params_std(4))]);
-disp(['a: ', num2str(params_mean(5)), ' ± ', num2str(params_std(5))]);
-disp(['delta: ', num2str(params_mean(6)), ' ± ', num2str(params_std(6))]);
-
-% Uncertainties
-%cm = inv(hessian); %cm -> covariance matrix
-%un = zeros(size(v_min)); %un -> vector with uncertainties
-%d_cm = diag(cm); %d_cm -> diagonal of the covariance matrix
-%for i = 1:length(un)
-%    un(i) = sqrt(d_cm(i));
-%end
-
-% Display the results
-disp('Parameters values of that minimize the sum of squares:'); 
-%disp(['K: ', num2str(v_min(1)), ' ± ', num2str(un(1))]);
-%disp(['alpha: ', num2str(v_min(2)), ' ± ', num2str(un(2))]);
-disp(['beta: ' num2str(v_min(3))]);
+disp('Parameters values of that minimize the sum of squares (value ± std):'); 
+disp(['K: ', num2str(v_min(1)), ' ± ', num2str(un(1))]);
+disp(['alpha: ', num2str(v_min(2)), ' ± ', num2str(un(2))]);
+disp(['beta: ', num2str(v_min(3)), ' ± ', num2str(un(3))]);
 disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
-disp(['gamma: ' num2str(v_min(4))]);
+disp(['gamma: ', num2str(v_min(4)), ' ± ', num2str(un(4))]);
+disp(['a: ', num2str(v_min(5)), ' ± ', num2str(un(5))]);
 disp(['Td: ' num2str(log(2) ./ v_min(4))]);
-disp(['a: ' num2str(v_min(5))]);
-disp(['delta: ' num2str(v_min(6))]);
+disp(['delta: ', num2str(v_min(6)), ' ± ', num2str(un(6))]);
+
+
 %PAPER VALUES
 %K = (4.2 ± 0.7)*10^(-2) = 0.042 ± 0.007 = [0.035,0.049]
 %alpha =  0.037 ± 0.006
