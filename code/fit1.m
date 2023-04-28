@@ -1,3 +1,5 @@
+clc, clearvars %clear
+
 % CSV files
 %Liang,Dawson,SeongH,SeongM,SeongL
 file_names = {'datafiles/SR_EQ1_L.csv','datafiles/SR_EQ1_D.csv',...
@@ -5,14 +7,14 @@ file_names = {'datafiles/SR_EQ1_L.csv','datafiles/SR_EQ1_D.csv',...
 % Data from the files:
 %x (tau) - elapsed time in months
 %y (SR) - survival rate in percentage
-N = [128, 35, 83, 51, 24]; %N - number of patients
-d = [4.88, 1.5, 1.8, 1.8, 1.8]; %d - dose per fraction Gy/fx
-D = [53.6, 61.5, 55, 45, 32.5]; %D - prescription dose Gy
-T_day = [28, 42, 37, 37, 37]; %T_day - treatment time in days
-T_month = zeros(size(T_day)); %T_month  - treatment time in months
-for i = 1:length(T_day)
-    tm = T_day(i)/30;
-    T_month(i) = tm;
+N_values = [128, 35, 83, 51, 24]; %N - number of patients
+d_values = [4.88, 1.5, 1.8, 1.8, 1.8]; %d - dose per fraction Gy/fx
+D_values = [53.6, 61.5, 55, 45, 32.5]; %D - prescription dose Gy
+T_day_values = [28, 42, 37, 37, 37]; %T_day - treatment time in days
+T_month_values = zeros(size(T_day_values)); %T_month  - treatment time in months
+for i = 1:length(T_day_values)
+    tm = T_day_values(i)/30;
+    T_month_values(i) = tm;
 end    
 %v - vector with parameters to find   
     %v(1) - K 
@@ -25,6 +27,17 @@ end
 % Initial parameter values - defined by the user
 v0 = [0.042, 0.037, 0.002587, 0.00608, 1268, 0.16];
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%points from all the files%%%
+%xx = []; 
+%yy = []; 
+%for i = 1:length(file_names)
+%    data = load(file_names{i});
+%    xx = [xx; data(:,1)];
+%    yy = [yy; data(:,2)];
+%end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Define the parameter bounds
 lb = [0, 0, 0, 0, 1000, 0];
 ub = [0.05, 0.05, 0.003, 0.007, 1500, 0.30];
@@ -32,13 +45,8 @@ ub = [0.05, 0.05, 0.003, 0.007, 1500, 0.30];
 % Define the fitting function
 f = @(x,v,d,D,T_day,T_month) real(100*exp(-v(1).*exp(-(v(2).*(1+(d./(v(2)./v(3)))).*D - v(4).*T_day - (v(5).*(x-T_month)).^v(6)))));
 
-% Define the combined chi-square function
-chi2 = @(v)...
-residuals(file_names{1}, N(1), d(1), D(1), T_day(1), T_month(1), v, f) ... 
-+ residuals(file_names{2}, N(2), d(2), D(2), T_day(2), T_month(2), v, f) ...
-+ residuals(file_names{3}, N(3), d(3), D(3), T_day(3), T_month(3), v, f) ...
-+ residuals(file_names{4}, N(4), d(4), D(4), T_day(4), T_month(4), v, f) ...
-+ residuals(file_names{5}, N(5), d(5), D(5), T_day(5), T_month(5), v, f);
+% Chi-square function
+chi2 = @(v) residuals(file_names, N_values, d_values, D_values, T_day_values, T_month_values, v, f);
 
 % Set up the algorithm options
 %options = optimoptions('ga', 'PopulationSize', 10, 'MaxGenerations', 1000);
@@ -46,16 +54,69 @@ options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9)
 
 % Run the algorithm
 %v_min = ga(chi2, 6, [], [], [], [], lb, ub, [], options);
-v_min = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
+[v_min,fval,exitflag,output,lambda,grad,hessian] = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
+
+% Define the function that returns the fitting parameters
+%fitting_params = @(data, model) fmincon(@(v) sum((data(:,2) - model(data(:,1),v,d_values,D_values,T_day_values,T_month_values)).^2), v0, [], [], [], [], lb, ub, [], options);
+
+% Define the number of bootstraps
+nboot = 1000;
+
+% Initialize the array to store fitting parameters
+params_array = zeros(nboot, 6);
+
+% Perform the bootstraps
+for i = 1:nboot
+    % Randomly select n data points with replacement
+    n = length(xx);
+    indices = randsample(n,n,true);
+    data_boot = [xx(indices) yy(indices)];
+    
+    % Call the fitting function with the bootstrap sample
+    params = v_min(data_boot,f);
+    
+    % Store the fitting parameters in the array
+    params_array(i,:) = params;
+end
+
+% Calculate the mean and standard deviation of the fitting parameters
+params_mean = mean(params_array);
+params_std = std(params_array);
+
+% Display the results
+disp('Parameters values of that minimize the sum of squares (mean ± std):'); 
+disp(['K: ', num2str(params_mean(1)), ' ± ', num2str(params_std(1))]);
+disp(['alpha: ', num2str(params_mean(2)), ' ± ', num2str(params_std(2))]);
+disp(['beta: ', num2str(params_mean(3)), ' ± ', num2str(params_std(3))]);
+disp(['gamma: ', num2str(params_mean(4)), ' ± ', num2str(params_std(4))]);
+disp(['a: ', num2str(params_mean(5)), ' ± ', num2str(params_std(5))]);
+disp(['delta: ', num2str(params_mean(6)), ' ± ', num2str(params_std(6))]);
+
+% Uncertainties
+%cm = inv(hessian); %cm -> covariance matrix
+%un = zeros(size(v_min)); %un -> vector with uncertainties
+%d_cm = diag(cm); %d_cm -> diagonal of the covariance matrix
+%for i = 1:length(un)
+%    un(i) = sqrt(d_cm(i));
+%end
 
 % Display the results
 disp('Parameters values of that minimize the sum of squares:'); 
-disp(['K: ' num2str(v_min(1))]);
-disp(['alpha: ' num2str(v_min(2))]);
+%disp(['K: ', num2str(v_min(1)), ' ± ', num2str(un(1))]);
+%disp(['alpha: ', num2str(v_min(2)), ' ± ', num2str(un(2))]);
 disp(['beta: ' num2str(v_min(3))]);
+disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
 disp(['gamma: ' num2str(v_min(4))]);
+disp(['Td: ' num2str(log(2) ./ v_min(4))]);
 disp(['a: ' num2str(v_min(5))]);
 disp(['delta: ' num2str(v_min(6))]);
+%PAPER VALUES
+%K = (4.2 ± 0.7)*10^(-2) = 0.042 ± 0.007 = [0.035,0.049]
+%alpha =  0.037 ± 0.006
+%alpha/beta = 14.3 ± 2.0 = [12.3,16.3]
+%Td = 114 ± 11 = [103,125]
+%a = 1268 ± 184 = [1084,1452]
+%delta = 0.16 ± 0.01 = [0.15,0.17]
 
 % Plotting
 hold on
@@ -67,7 +128,7 @@ y = data(:, 2);
 %original points
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 6, 'DisplayName', 'Liang')
 %fitted function   
-plot(x_points, f(x_points,v_min,d(1),D(1),T_day(1),T_month(1)), '--', 'LineWidth', 2, 'Color', '#FD04FC','HandleVisibility', 'off')
+plot(x_points, f(x_points,v_min,d_values(1),D_values(1),T_day_values(1),T_month_values(1)), '--', 'LineWidth', 2, 'Color', '#FD04FC','HandleVisibility', 'off')
 
 % Dawson
 data = load(file_names{2});
@@ -76,7 +137,7 @@ y = data(:, 2);
 %original points
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 6, 'DisplayName', 'Dawson');
 %fitted function
-plot(x_points, f(x_points,v_min,d(2),D(2),T_day(2),T_month(2)), '--', 'LineWidth', 2, 'Color', '#0000F7','HandleVisibility', 'off');
+plot(x_points, f(x_points,v_min,d_values(2),D_values(2),T_day_values(2),T_month_values(2)), '--', 'LineWidth', 2, 'Color', '#0000F7','HandleVisibility', 'off');
 
 % SeongH
 data = load(file_names{3});
@@ -85,7 +146,7 @@ y = data(:, 2);
 %original points
 plot(x, y, '^', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 6, 'DisplayName', 'SeongH')
 %fitted function
-plot(x_points, f(x_points,v_min,d(3),D(3),T_day(3),T_month(3)), '--', 'LineWidth', 2, 'Color', '#000000','HandleVisibility', 'off')
+plot(x_points, f(x_points,v_min,d_values(3),D_values(3),T_day_values(3),T_month_values(3)), '--', 'LineWidth', 2, 'Color', '#000000','HandleVisibility', 'off')
 
 % SeongM
 data = load(file_names{4});
@@ -94,7 +155,7 @@ y = data(:, 2);
 %original points
 plot(x, y, 's', 'LineWidth', 2, 'Color', '#FD6C6D','MarkerSize', 6, 'DisplayName', 'SeongM')
 %fitted function
-plot(x_points, f(x_points,v_min,d(4),D(4),T_day(4),T_month(4)), '--', 'LineWidth', 2, 'Color', '#FD6C6D','HandleVisibility', 'off')
+plot(x_points, f(x_points,v_min,d_values(4),D_values(4),T_day_values(4),T_month_values(4)), '--', 'LineWidth', 2, 'Color', '#FD6C6D','HandleVisibility', 'off')
 
 % SeongL
 data = load(file_names{5});
@@ -103,7 +164,7 @@ y = data(:, 2);
 %original points
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#46FD4B','MarkerSize', 6, 'DisplayName', 'SeongL')
 %fitted function
-plot(x_points, f(x_points,v_min,d(5),D(5),T_day(5),T_month(5)), '--', 'LineWidth', 2, 'Color', '#46FD4B','HandleVisibility', 'off')
+plot(x_points, f(x_points,v_min,d_values(5),D_values(5),T_day_values(5),T_month_values(5)), '--', 'LineWidth', 2, 'Color', '#46FD4B','HandleVisibility', 'off')
 
 %legend,lables and title
 legend('Location', 'northeast')
@@ -115,16 +176,26 @@ title('Fit 1')
 %saving the plot
 %saveas(gcf, 'fit1.pdf')
 
-function r = residuals(file_name, N, d, D, T_day, T_month, v, f)
-    s = 0;
-    data = load(file_name);
-    x = data(:, 1); %x (tau) - elapsed time in months
-    y = data(:, 2); %y (SR) - survival rate in percentage
-    for i = 1:length(x)
-        y_fit = f(x(i),v,d,D,T_day,T_month);
-        sigma = y(i) .* sqrt(abs((1-y(i)))./N);
-        res = (y_fit - y(i)).^2 / sigma.^2;
-        s = res + s;
+function r = residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, v, f)
+    s = 0; %sum for all the points of all the files
+    for i = 1:length(files)
+        data = load(files{i});
+        x = data(:, 1); %x (tau) - elapsed time in months
+        y = data(:, 2); %y (SR) - survival rate in percentage
+        N = N_list(i);
+        d = d_list(i);
+        D = D_list(i);
+        T_day = T_day_list(i);
+        T_month = T_month_list(i);
+        sf = 0; %sum for the points of a specific file
+
+        for j = 1:length(x)
+            y_fit = f(x(j),v,d,D,T_day,T_month);
+            sigma = y(j) .* sqrt(abs((1-y(j)))./N);
+            res = (y_fit - y(j)).^2 / sigma.^2;
+            sf = res + sf;
+        end
+        s = sf + s;
     end
     r = s;
 end
