@@ -174,7 +174,7 @@ handles.listbox_DataSets = uicontrol(panel_DataList,...
         for i = 1:numel(DataSetsList)
             if strcmp(tmp(val), DataSetsList(i))
                 InputData = load(strcat('.\',string(tmp(val,:)),'.m'));
-                cla(handles.axes_plot)
+                cla(handles.axes_plot, 'reset')
                 Time = InputData(:, 1);
                 SR = InputData(:, 2);
                 plot(Time, SR, '*')
@@ -270,46 +270,6 @@ handles.pushbutton_delete = uicontrol(panel_DataList,...
         
     end
 
-    handles.buttonGroup = uibuttongroup('Parent',mainFig,...
-        'Title','Student Registration',...
-        'Tag','buttongroup',...
-        'FontSize',12,...
-        'FontWeight','bold',...
-        'Units','Normalized','Position',[.19 .006 .193 .165],...
-        'UserData','Test 1',...
-        'SelectionChangeFcn',@buttongroup_Callback);
-
-    handles.edit_date = uicontrol(handles.buttonGroup,'Style','edit',...
-        'Tag','edit_date',...
-        'Units','Normalized','Position',[0.3 0.02 0.6 0.38],...
-        'TooltipString','Valid format: dd-mm-yyyy',...
-        'HorizontalAlignment','left',...
-        'BackgroundColor','red',...
-        'UserData','',...
-        'Callback',@edit_date_Callback);
-    
-
-%-----------------------------
-% BUILD ONE UICONTEXTMENU
-%-----------------------------
-c = uicontextmenu;
-m1 = uimenu(c,'Label','Red','Callback',@backgroundcolor);
-m2 = uimenu(c,'Label','Blue','Callback',@backgroundcolor);
-m3 = uimenu(c,'Label','White','Callback',@backgroundcolor);
-set(handles.edit_date,'UIContextMenu',c)
-
-    function backgroundcolor(source,~)
-        switch source.Label
-            case 'Red'
-                handles.edit_date.BackgroundColor ='r';
-            case 'Blue'
-                handles.edit_date.BackgroundColor ='b';
-            case 'White'
-                handles.edit_date.BackgroundColor ='w';
-        end
-    end
-%-
-
 
 %---------------------------------------------------------------
 % BUILD A NEW PANEL
@@ -323,52 +283,6 @@ handles.panel_DataDetails = uipanel('Parent',mainFig,...
     'ForegroundColor',  'm',...
     'FontSize',         12);
 
-% It is convenient that the first option is an instruction
-DataSets = {'Select Data Sets...' 'Physics' 'Chemistry' 'Mathematics'};
-handles.popupmenu_SortData = uicontrol(...
-    'Parent',handles.panel_DataDetails,...
-    'Style','popup',...
-    'Tag','popup_SortData',...
-    'Units','Normalized','Position',[0.01 0.9 0.15 0.05],...
-    'String',DataSets,...
-    'TooltipString','Select Data Set',...
-    'HorizontalAlignment','left',...
-    'BackgroundColor','y',...
-    'UserData','',...
-    'Callback',@popupmenu_SortData_Callback);
-
-    function popupmenu_SortData_Callback(hObject,~)
-        
-        % Because I'm getting the value, I need to know the relation
-        % between the value and the string
-        val = get(hObject,'Value');
-        if     val == 1 % it may be needed to reset all data
-            cla(handles.axes_plot)
-            
-            % Show the all data again
-            set(handles.uitable,'Data',data,...
-                'Rowname',get(handles.listbox_DataSets,'String'))
-        elseif val == 2 % Physics
-            % fill table with data
-            filterByCourse('Physics');
-            % clear plot
-            cla(handles.axes_plot)
-        elseif val == 3 % Chemistry
-            plot(age(:,1),age(:,end),'kx','MarkerSize',12,...
-                'Parent',handles.axes_plot)
-            %clear table
-            set(handles.uitable,'Data','','Rowname','')
-        elseif val == 4 % Mathematics
-            filterByCourse('Mathematics');
-            
-            cla(handles.axes_plot)
-            for i=1:size(age,2)                
-                plot(age(:,i),age(:,end-i+1),'x')
-                drawnow
-            end
-            
-        end
-    end
 
 %------------------------------------------------------------------
 % BUILD UITABLE
@@ -450,14 +364,16 @@ handles.pushbutton_fit = uicontrol(panel_Fit,...
 
     function pushbutton_Fit_Callback(hObject,~)
         
-        data = get(handles.uitable,'Userdata')
-        DataFiles = strings(0)
-        DataSetsList = get(handles.listbox_DataSets,'String')
+        data = get(handles.uitable,'Userdata');
+        DataFiles = strings(0);
+        DataSetsList = get(handles.listbox_DataSets,'String');
+        Labels = data(:,3)
 
         if isempty(data)
             disp('No data to show')
         else
-        Selected = data(:,1)
+            cla(handles.axes_plot, 'reset') %clear axes
+            Selected = data(:,1)
             for i = 1:numel(Selected)
                 %disp(Selected(i))
                 %disp(isequal(Selected(i), {[1]}))
@@ -467,10 +383,8 @@ handles.pushbutton_fit = uicontrol(panel_Fit,...
                     file_names = cellstr(DataFiles)
                 end
             end
-        end
-        
-        fit1(file_names)
-
+            fit1(file_names, Labels)
+        end    
     end
 
 end %main
