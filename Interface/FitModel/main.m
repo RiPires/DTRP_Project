@@ -166,14 +166,14 @@ handles.listbox_DataSets = uicontrol(panel_DataList,...
 
         handles.pushbutton_delete.Enable ='on';   
         
-        DataSetsList = get(handles.listbox_DataSets,'String');
+        DataSetsList = get(handles.listbox_DataSets,'String')
 
-        tmp = get(hObject, 'String');
-        val = get(hObject, 'Value');
+        tmp = get(hObject, 'String')
+        val = get(hObject, 'Value')
         
         for i = 1:numel(DataSetsList)
             if strcmp(tmp(val), DataSetsList(i))
-                InputData = load(strcat('.\',string(tmp(val)),'.m'));
+                InputData = load(strcat('.\',string(tmp(val,:)),'.m'));
                 cla(handles.axes_plot)
                 Time = InputData(:, 1);
                 SR = InputData(:, 2);
@@ -375,15 +375,15 @@ handles.popupmenu_SortData = uicontrol(...
 %------------------------------------------------------------------
 handles.uitable = uitable(handles.panel_DataDetails,...
     'Tag','uitable',...
-    'ColumnFormat',{'char' 'char' 'numeric' 'numeric' ...
-         'numeric' 'logical'},...
+    'ColumnFormat',{'logical' 'char' 'char' 'numeric' 'numeric' ...
+                                 'numeric'},...
     'Data',data,...
-    'Units','Normalized','Position',[0.01 0.01 0.5 0.85],...
+    'Units','Normalized', ...
+    'Position',[0.01 0.01 0.5 0.85],...
     'ColumnEditable',true,...
-    'ColumnName',...
-          {'Author' 'Label' 'D' 'd' 'Td' ' '},...
+    'ColumnName',{'Select' 'Author' 'Label' 'D' 'd' 'Td'},...
     'RowName',get(handles.listbox_DataSets,'string'),...
-    'Userdata',data,...% Simple way store data
+    'Userdata',data,...
     'CellEditCallback',@uitable_Callback);
 % Check other properties in the Inspector from Guide or Help manual
 
@@ -391,7 +391,7 @@ handles.uitable = uitable(handles.panel_DataDetails,...
     % if there is more than one uitable, give it an more appropriate name
      function uitable_Callback(hObject,~)
         
-        tmp = get(hObject,'Data');
+        tmp = get(hObject,'Data')
         % keep the data from the table somwhere
         set(handles.uitable,'Userdata',tmp)
         
@@ -408,5 +408,69 @@ handles.axes_plot = axes('Parent',handles.panel_DataDetails,...
     'Visible','on');
 xlabel('Time (months)'),ylabel('SR (%)'),hold on
 
+%------------------------------------------------------------------
+% CALLS FIT FUNCTION
+%------------------------------------------------------------------
 
-end
+    function Fit(hObject,~)       
+        %%%   !!!   !!!!!   !!!   %%%
+        %%%   !!!   TO DO   !!!   %%%
+        %%%   !!!   !!!!!   !!!   %%%
+        tmp = get(hObject,'Data')
+        % keep the data from the table somwhere
+        set(handles.uitable,'Userdata',tmp)
+
+        Selection = get(handles.uitable,'ColumnFormat');
+
+    end
+
+
+%------------------------------------------------------------------
+% FIT BUTTON
+%------------------------------------------------------------------
+panel_Fit = uipanel('Parent', mainFig, ...
+    'Tag', 'panel_Fit', ...
+    'Title','Start', ...
+    'Units', 'normalized', ...
+    'Position',         [.40 .1 .1 .1],...
+    'HighlightColor',   'm',...
+    'ForegroundColor',  'm',...
+    'FontSize',         12);
+
+handles.pushbutton_fit = uicontrol(panel_Fit,...
+    'Tag','pushbutton_Fit',...
+    'Style',' pushbutton', ...
+    'String','Fit',...
+    'Units','Normalized',...
+    'Position',[.20 .2 .7 .7],...
+    'Enable','on',...
+    'ForegroundColor','r',...
+    'Tooltipstring','Perform fit',...
+    'Callback',@pushbutton_Fit_Callback);
+
+    function pushbutton_Fit_Callback(hObject,~)
+        
+        data = get(handles.uitable,'Userdata')
+        DataFiles = strings(0)
+        DataSetsList = get(handles.listbox_DataSets,'String')
+
+        if isempty(data)
+            disp('No data to show')
+        else
+        Selected = data(:,1)
+            for i = 1:numel(Selected)
+                %disp(Selected(i))
+                %disp(isequal(Selected(i), {[1]}))
+                if isequal(Selected(i),{[1]})
+                    disp('File Added')
+                    DataFiles = [DataFiles  strcat(".\",string(DataSetsList(i,:)),".m")]
+                    file_names = cellstr(DataFiles)
+                end
+            end
+        end
+        
+        fit1(file_names)
+
+    end
+
+end %main
