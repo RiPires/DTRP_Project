@@ -151,7 +151,7 @@ handles.listbox_students = uicontrol(panel_studentsList,...
     'Enable','on',...
     'Callback',@listbox_students_Callback);
 % String defined as cell to accomodate different size strings
-% String can be a list read directly from a file or a database which then
+% String can be a list read     directly from a file or a database which then
 % fills up the listbox
 
     function listbox_students_Callback(hObject,~)

@@ -81,13 +81,8 @@ v0 = [0.042, 0.037, 0.002587, 0.00608, 1268, 0.16];
     disp(['Td: ' num2str(log(2) ./ v_min(4))]);
     disp(['delta: ', num2str(v_min(6)), ' ± ', num2str(un(6))]);
 
-K = num2str(v_min(1));
-alpha = num2str(v_min(2));
-beta = num2str(v_min(3));
-gamma = num2str(v_min(4));
-a = num2str(v_min(5));
-Td = num2str(log(2) ./ v_min(4));
-delta = num2str(v_min(6));
+K = 
+
 
 % Plotting
 hold on
