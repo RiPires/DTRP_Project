@@ -2,8 +2,8 @@ clc, clearvars %clear
 
 % CSV files
 %Liang,Dawson,SeongH,SeongM,SeongL
-file_names = { 'datafiles/SR_EQ2_L.csv','datafiles/SR_EQ2_D.csv',...
-    'datafiles/SR_EQ2_SH.csv','datafiles/SR_EQ2_SM.csv','datafiles/SR_EQ2_SL.csv'};
+file_names = { 'datafiles/SR_EQ1_L.csv','datafiles/SR_EQ1_D.csv',...
+    'datafiles/SR_EQ1_SH.csv','datafiles/SR_EQ1_SM.csv','datafiles/SR_EQ1_SL.csv'};
 % Data from the files:
 %x (tau) - elapsed time in months
 %y (SR) - survival rate in percentage
