@@ -53,10 +53,8 @@ ub = [2.05, 0.015, 0.0007, 0.006, 0.70, 0.50];
     %, -Inf, double(exp(-v(2)*(1+d/(v(2)/v(3)))*D-v(4)*T_day-(v(4)*(x-T_month))...
     %.^v(6))-v(1))/(v(5)));
 
-f = @(x,v,d,D,T_day,T_month) 1 - (1/sqrt(2)) * integral(@(z) exp(-(z.^2)/2), -Inf, t);
-t = @(x,v,d,D,T_day,T_month) (exp(-v(2)*(1+d/(v(2)/v(3)))*D-v(4)*T_day-(v(4)*(x-T_month)).^v(6))-v(1))/(v(5));
-assert(isa(t, 'double') || isa(t, 'single'), 't must be a double or single scalar');
-assert(numel(t) == 1, 't must be a scalar');
+t = @(x,v,d,D,T_day,T_month) double((exp(-v(2)*(1+d/(v(2)/v(3)))*D-v(4)*T_day-(v(4)*(x-T_month)).^v(6))-v(1))/(v(5)));
+f = @(x,v,d,D,T_day,T_month) 1 - (1/sqrt(2)) * integral(@(z) exp(-(z.^2)/2), -Inf, t(x,v,d,D,T_day,T_month));
 
 % Chi-square function
 chi2 = @(v) residuals(file_names, N_values, d_values, D_values, T_day_values, T_month_values, v, f);
