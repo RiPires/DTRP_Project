@@ -37,11 +37,11 @@ end
     %v(6) - delta 
 
 % Initial parameter values - defined by the user
-v0 = [2.04, 0.009, 0.00065, 0.0053, 0.64, 0.21];
+v0 = [2.04, 0.01, 0.00067, 0.0054, 0.65, 0.20];
 
 % Define the parameter bounds
-lb = [0, 0, 0, 0, 0, 0];
-ub = [3, 0.010, 0.001, 0.01, 1, 1];
+lb = [1, 0,     0,      0,    0,  0];
+ub = [3, 0.015, 0.0008, 0.01, 1, .5];
 
 
 % Define the fitting function
@@ -111,6 +111,8 @@ disp(['delta: ', num2str(v_min(6))]);
 % Plotting
 hold on
 x_points = linspace(0, 70, 71);
+
+v_min = [2.04, 0.01, 0.00067, 0.0054, 0.65, 0.20];
 
 % Liang
 y_points = zeros(size(x_points));
