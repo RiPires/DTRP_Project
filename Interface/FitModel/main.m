@@ -453,7 +453,7 @@ handles.pushbutton_fit = uicontrol(panel_Fit,...
     'Tooltipstring','Perform fit',...
     'Callback',@pushbutton_Fit_Callback);
 
-    function pushbutton_Fit_Callback(hObject,~)
+    function pushbutton_Fit_Callback(~,~)
         
         data = get(handles.uitable,'Userdata')
         DataFiles = strings(0);
@@ -547,10 +547,18 @@ handles.pushbutton_SavePlot = uicontrol(handles.panel_Fited,...
     'Enable','on',...
     'ForegroundColor','r',...
     'Tooltipstring','Perform fit',...
-    'Callback',@pushbutton_Fit_Callback);
+    'Callback',@pushbutton_SavePlot_Callback);
 
     function pushbutton_SavePlot_Callback (~,~)
 
+        FileName = inputdlg('Enter file name and extension (.png, .pdf, .jpg, .fig, .m, .jpeg, .svg):')
+
+        fignew = figure('Visible','off'); % Invisible figure
+        newAxes = copyobj(handles.axes_plotFit,fignew); % Copy the appropriate axes
+        set(newAxes,'Position',get(groot,'DefaultAxesPosition')); % The original position is copied too, so adjust it.
+        set(fignew,'CreateFcn','set(gcbf,''Visible'',''on'')'); % Make it visible upon loading
+        saveas(fignew,string(FileName));
+        delete(fignew);
     end
 
 
