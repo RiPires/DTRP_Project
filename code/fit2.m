@@ -4,6 +4,7 @@ clc, clearvars %clear
 %Liang,Dawson,SeongH,SeongM,SeongL
 file_names = { 'datafiles/SR_EQ1_L.csv','datafiles/SR_EQ1_D.csv',...
     'datafiles/SR_EQ1_SH.csv','datafiles/SR_EQ1_SM.csv','datafiles/SR_EQ1_SL.csv'};
+number_studies = numel(file_names);
 % Data from the files:
 %x (tau) - elapsed time in months
 %y (SR) - survival rate in percentage
@@ -37,27 +38,19 @@ end
     %v(6) - delta 
 
 % Initial parameter values - defined by the user
-v0 = [2.04, 0.009, 0.00065, 0.0053, 0.64, 0.21];
+v0 = [2.03, 0.010, 0.000666, 0.00542, 0.65, 0.20];
 
 % Define the parameter bounds
-lb = [0, 0, 0, 0, 0, 0];
-ub = [3, 0.010, 0.001, 0.01, 1, 1];
+lb = [1.99, 0.009, 0.000647, 0.00495, 0.59, 0.19];
+ub = [2.07, 0.011, 0.000692, 0.00598, 0.71, 0.21];
 
-
-% Define the fitting function
-f = @(x,v,d,D,T_day,T_month) real(100 * (1 - (1/sqrt(2)) * (integral(@(z) exp(-(z.^2)/2), -Inf, ...
-    (double(real((exp(-(v(2)*(1+d/(v(2)/v(3)))*D-v(4)*T_day-(v(4)*(30*x-T_day)).^v(6))) - v(1))/(v(5))))), 'ArrayValued', true))));
-%30->to convert months into days
+% Fitting function
+f = @(x,v,d,D,T_day) fit(x,v,d,D,T_day,'fitting');
 
 
 % Chi-square function
-chi2 = @(v) residuals(file_names, N_values, d_values, D_values, T_day_values, T_month_values, v, f);
+chi2 = @(v) residuals(file_names, N_values, d_values, D_values, T_day_values, v, f);
 
-%genetic algorithm
-% Set up the algorithm options
-%options = optimoptions('ga', 'PopulationSize', 10, 'MaxGenerations', 1000);
-% Run the algorithm
-%v_min = ga(chi2, 6, [], [], [], [], lb, ub, [], options);
 
 %fmincon
 % Set up the algorithm options
@@ -65,38 +58,14 @@ options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9)
 % Run the algorithm
 [v_min,fval,exitflag,output,lambda,grad,hessian] = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
 
-%particleswarm
-% Set up the algorithm options
-%options = optimoptions('particleswarm','SwarmSize',50,'HybridFcn',@fmincon);
-% Run the algorithm
-%rng default  % For reproducibility
-%[vmin,fval,exitflag,output] = particleswarm(chi2,6,lb,ub,options)
-
-% % Uncertainties
-% cm = inv(hessian); %cm -> covariance matrix
-% un = zeros(size(v_min)); %un -> vector with uncertainties
-% d_cm = diag(cm); %d_cm -> diagonal of the covariance matrix
-% for i = 1:length(un)
-%     un(i) = sqrt(d_cm(i));
-% end
-% 
-% % Display the results
-% %real results
-% %K50/K0 = 2.03±0.04
-% %alpha = 0.010±0.001
-% %alpha/beta = 15.0±2.0
-% %sigmak/K0 = 0.65±0.06
-% %Td = 128±12
-% %delta = 0.20±0.01
-% disp('Parameters values of that minimize the sum of squares (value ± std):'); 
-% disp(['K50/K0: ', num2str(v_min(1)), ' ± ', num2str(un(1))]);
-% disp(['alpha: ', num2str(v_min(2)), ' ± ', num2str(un(2))]);
-% disp(['beta: ', num2str(v_min(3)), ' ± ', num2str(un(3))]);
-% disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
-% disp(['gamma: ', num2str(v_min(4)), ' ± ', num2str(un(4))]);
-% disp(['sigmak/K0: ', num2str(v_min(5)), ' ± ', num2str(un(5))]);
-% disp(['Td: ' num2str(log(2) ./ v_min(4))]);
-% disp(['delta: ', num2str(v_min(6)), ' ± ', num2str(un(6))]);
+% Display the results
+% real results
+% K50/K0 = 2.03±0.04
+% alpha = 0.010±0.001
+% alpha/beta = 15.0±2.0
+% sigmak/K0 = 0.65±0.06
+% Td = 128±12
+% delta = 0.20±0.01
 
 disp('Parameters values of that minimize the sum of squares (value):'); 
 disp(['K50/K0: ', num2str(v_min(1))]);
@@ -107,75 +76,131 @@ disp(['gamma: ', num2str(v_min(4))]);
 disp(['sigmak/K0: ', num2str(v_min(5))]);
 disp(['Td: ' num2str(log(2) ./ v_min(4))]);
 disp(['delta: ', num2str(v_min(6))]);
+% disp('Parameters values of that minimize the sum of squares (value ± std):'); 
+% disp(['K50/K0: ', num2str(v_min(1)), ' ± ', num2str(un(1))]);
+% disp(['alpha: ', num2str(v_min(2)), ' ± ', num2str(un(2))]);
+% disp(['beta: ', num2str(v_min(3)), ' ± ', num2str(un(3))]);
+% disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
+% disp(['gamma: ', num2str(v_min(4)), ' ± ', num2str(un(4))]);
+% disp(['sigmak/K0: ', num2str(v_min(5)), ' ± ', num2str(un(5))]);
+% disp(['Td: ' num2str(log(2) ./ v_min(4))]);
+% disp(['delta: ', num2str(v_min(6)), ' ± ', num2str(un(6))]);
 
 % Plotting
 hold on
-x_points = linspace(0, 70, 71);
+x_points = linspace(1, 70, 71);
 
 % Liang
-y_points = zeros(size(x_points));
 data = load(file_names{1});
+
+y_plot = [];
+x_plot = [];
 x = data(:, 1);
 y = data(:, 2);
 %original points
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 6, 'DisplayName', 'Liang')
 %fitted function  
 for i = 1:length(x_points)
-    y_points(i) = f(x_points(i),v_min,d_values(1),D_values(1),T_day_values(1),T_month_values(1));
+    sr = fit(x_points(i),v_min,d_values(1),D_values(1),T_day_values(1),'plotting');
+    if ~isnan(sr)
+        tau = x_points(i);
+        y_plot = [y_plot, sr];
+        x_plot = [x_plot, tau];
+   end
 end
-plot(x_points, y_points, '--', 'LineWidth', 2, 'Color', '#FD04FC','HandleVisibility', 'off')
+
+plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#FD04FC','HandleVisibility', 'off')
+hold on;
+
 
 % Dawson
-y_points = zeros(size(x_points));
 data = load(file_names{2});
+
+y_plot = [];
+x_plot = [];
 x = data(:, 1);
 y = data(:, 2);
 %original points
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 6, 'DisplayName', 'Dawson');
-%fitted function
+%fitted function  
 for i = 1:length(x_points)
-    y_points(i) = f(x_points(i),v_min,d_values(2),D_values(2),T_day_values(2),T_month_values(2));
+    sr = fit(x_points(i),v_min,d_values(2),D_values(2),T_day_values(2),'plotting');
+    if ~isnan(sr)
+        tau = x_points(i);
+        y_plot = [y_plot, sr];
+        x_plot = [x_plot, tau];
+   end
 end
-plot(x_points, y_points, '--', 'LineWidth', 2, 'Color', '#0000F7','HandleVisibility', 'off');
 
+plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#0000F7','HandleVisibility', 'off');
+hold on;
+
+ 
 % SeongH
-y_points = zeros(size(x_points));
 data = load(file_names{3});
+
+y_plot = [];
+x_plot = [];
 x = data(:, 1);
 y = data(:, 2);
 %original points
-plot(x, y, '^', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 6, 'DisplayName', 'SeongH')
-%fitted function
+plot(x, y, '^', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 6, 'DisplayName', 'SeongH');
+%fitted function  
 for i = 1:length(x_points)
-    y_points(i) = f(x_points(i),v_min,d_values(3),D_values(3),T_day_values(3),T_month_values(3));
+    sr = fit(x_points(i),v_min,d_values(3),D_values(3),T_day_values(3),'plotting');
+    if ~isnan(sr)
+        tau = x_points(i);
+        y_plot = [y_plot, sr];
+        x_plot = [x_plot, tau];
+   end
 end
-plot(x_points, y_points, '--', 'LineWidth', 2, 'Color', '#000000','HandleVisibility', 'off')
+
+plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#000000','HandleVisibility', 'off');
+hold on;
 
 % SeongM
-y_points = zeros(size(x_points));
 data = load(file_names{4});
+
+y_plot = [];
+x_plot = [];
 x = data(:, 1);
 y = data(:, 2);
 %original points
-plot(x, y, 's', 'LineWidth', 2, 'Color', '#FD6C6D','MarkerSize', 6, 'DisplayName', 'SeongM')
-%fitted function
+plot(x, y, 's', 'LineWidth', 2, 'Color', '#FD6C6D','MarkerSize', 6, 'DisplayName', 'SeongM');
+%fitted function  
 for i = 1:length(x_points)
-    y_points(i) = f(x_points(i),v_min,d_values(4),D_values(4),T_day_values(4),T_month_values(4));
+    sr = fit(x_points(i),v_min,d_values(4),D_values(4),T_day_values(4),'plotting');
+    if ~isnan(sr)
+        tau = x_points(i);
+        y_plot = [y_plot, sr];
+        x_plot = [x_plot, tau];
+   end
 end
-plot(x_points, y_points, '--', 'LineWidth', 2, 'Color', '#FD6C6D','HandleVisibility', 'off')
+
+plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#FD6C6D','HandleVisibility', 'off');
+hold on;
 
 % SeongL
-y_points = zeros(size(x_points));
 data = load(file_names{5});
+
+y_plot = [];
+x_plot = [];
 x = data(:, 1);
 y = data(:, 2);
 %original points
-plot(x, y, 'o', 'LineWidth', 2, 'Color', '#46FD4B','MarkerSize', 6, 'DisplayName', 'SeongL')
-%fitted function
+plot(x, y, 'o', 'LineWidth', 2, 'Color', '#46FD4B','MarkerSize', 6, 'DisplayName', 'SeongL');
+%fitted function  
 for i = 1:length(x_points)
-    y_points(i) = f(x_points(i),v_min,d_values(5),D_values(5),T_day_values(5),T_month_values(5));
+    sr = fit(x_points(i),v_min,d_values(5),D_values(5),T_day_values(5),'plotting');
+    if ~isnan(sr)
+        tau = x_points(i);
+        y_plot = [y_plot, sr];
+        x_plot = [x_plot, tau];
+   end
 end
-plot(x_points, y_points, '--', 'LineWidth', 2, 'Color', '#46FD4B','HandleVisibility', 'off')
+
+plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#46FD4B','HandleVisibility', 'off');
+hold on;
 
 %legend,lables and title
 legend('Location', 'northeast')
@@ -187,7 +212,35 @@ title('Fit 2')
 %saving the plot
 %saveas(gcf, 'fit2.pdf')
 
-function r = residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, v, f)
+%%%%%%%%%%%%%%%%%%%%%%%
+%Functions%
+
+function result = fit(tau,v,d,D,T_day,purpose)
+    %v(1) - K50/K0
+    %v(2) - alpha Gy^-1
+    %v(3) - be ta Gy^-2
+    %v(4) - gamma days^-1
+    %v(5) - sigmak/K0
+    %v(6) - delta 
+    denominator = v(5);
+    p = v(2) * (1 + d / (v(2) / v(3))) * D - v(4) * T_day - ((v(4) * (30 * tau - T_day)) ^ v(6));
+    % 30->to convert months into days
+    numerator = exp(-p) - v(1);
+    t = numerator / denominator;
+    if strcmp(purpose, 'fitting')
+    %during the fitting if t assumes complex values there is no issue
+        result = 100 * (1/2)*(1-erf(t/sqrt(2)));
+    elseif strcmp(purpose, 'plotting')
+        if isreal(t)
+            result = 100 * (1/2)*(1-erf(t/sqrt(2)));
+        else
+            result = NaN;
+        end
+    end
+ end
+        
+
+function r = residuals(files, N_list, d_list, D_list, T_day_list, v, f)
     s = 0; %sum for all the points of all the files
     for i = 1:length(files)
         data = load(files{i});
@@ -197,11 +250,10 @@ function r = residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, 
         d = d_list(i);
         D = D_list(i);
         T_day = T_day_list(i);
-        T_month = T_month_list(i);
         sf = 0; %sum for the points of a specific file
 
         for j = 1:length(x)
-            y_fit = f(x(j),v,d,D,T_day,T_month);
+            y_fit = f(x(j),v,d,D,T_day);
             sigma = y(j) .* sqrt(abs((1-y(j)))./N);
             res = (y_fit - y(j)).^2 / sigma.^2;
             sf = res + sf;
@@ -210,3 +262,5 @@ function r = residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, 
     end
     r = s;
 end
+
+

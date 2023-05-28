@@ -1,9 +1,10 @@
 clc, clearvars %clear
 
 % CSV files
-%Liang,Dawson,SeongH,SeongM,SeongL
+% Liang,Dawson,SeongH,SeongM,SeongL
 file_names = { 'datafiles/SR_EQ1_L.csv','datafiles/SR_EQ1_D.csv',...
     'datafiles/SR_EQ1_SH.csv','datafiles/SR_EQ1_SM.csv','datafiles/SR_EQ1_SL.csv'};
+number_studies = numel(file_names);
 % Data from the files:
 %y (SR) - survival rate in percentage
 %tau - elapsed time in months
@@ -20,14 +21,14 @@ N_values = [128, 35, 83, 51, 24]; %N - number of patients
 d_values = [4.88, 1.5, 1.8, 1.8, 1.8]; %d - dose per fraction Gy/fx
 D_values = [53.6, 61.5, 55, 45, 32.5]; %D - prescription dose Gy
 T_day_values = [28, 42, 37, 37, 37]; %T_day - treatment time in days
-T_day_mean = mean(T_day_values); %CONFIRM THIS!%
+T_day_mean = mean(T_day_values); 
 T_month_values = zeros(size(T_day_values)); %T_month  - treatment time in months
 for i = 1:length(T_day_values)
     tm = T_day_values(i)/30;
     T_month_values(i) = tm;
 end  
 
-v = [2.03, 0.010, 15.0, 0.0054, 0.65, 0.20];
+v = [1.99, 0.0099754, 14.4153, 0.0056126, 0.71, 0.19];
 %v - vector with parameters obtained from fit2   
     %v(1) - K50/K0
     %v(2) - alpha Gy^-1
@@ -51,57 +52,169 @@ disp(['SeongM: ', num2str(x_values(4))]);
 disp(['SeongL: ', num2str(x_values(5))]);
 
 
-% Define the fitting function
-f = @(x,tau,v,T_day) real(100 * (1 - (1/sqrt(2)) * (integral(@(z) exp(-(z.^2)/2), -Inf, ...
-    (double(real((exp(-(v(2)*x-(v(4)*(30*tau-T_day)).^v(6))) - v(1))/(v(5))))), 'ArrayValued', true))));
-%30->to convert months into days
-
 % Plotting
 hold on
 x_points = linspace(0, 90, 91);
 
 % tau = 1year
 tau = 365; 
-y_points = zeros(size(x_points));
+y_plot = [];
+x_plot = [];
 for i = 1:length(x_points)
-    y_points(i) = f(x_points(i),tau,v,T_day_mean);
+    sr = fit(x_points(i),tau,v,T_day_mean); %-> change this!
+    if ~isnan(sr)
+        bed = x_points(i);
+        y_plot = [y_plot, sr];
+        x_plot = [x_plot, bed];
+   end
 end
 
-%curve  
-plot(x_points, y_points, '--', 'LineWidth', 2, 'Color', '#FE0100','DisplayName', 'tau=1year')
+% curve  
+plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#FE0100','DisplayName', 'tau=1year')
+
+% points
+
+% Liang
+x = x_values(1);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 's', 'LineWidth', 2, 'Color', '#FE0100','MarkerSize', 8, 'HandleVisibility', 'off')
+% Dawson
+x = x_values(2);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 's', 'LineWidth', 2, 'Color', '#FE0100','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongH
+x = x_values(3);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 's', 'LineWidth', 2, 'Color', '#FE0100','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongM
+x = x_values(4);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 's', 'LineWidth', 2, 'Color', '#FE0100','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongL
+x = x_values(5);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 's', 'LineWidth', 2, 'Color', '#FE0100','MarkerSize', 8, 'HandleVisibility', 'off')
+
 
 % tau = 2years
 tau = 730; 
-y_points = zeros(size(x_points));
+y_plot = [];
+x_plot = [];
 for i = 1:length(x_points)
-    y_points(i) = f(x_points(i),tau,v,T_day_mean);
+    sr = fit(x_points(i),tau,v,T_day_mean); %> change this!
+    if ~isnan(sr)
+        bed = x_points(i);
+        y_plot = [y_plot, sr];
+        x_plot = [x_plot, bed];
+   end
 end
 
-
 %curve  
-plot(x_points, y_points, '--', 'LineWidth', 2, 'Color', '#0000F7','DisplayName', 'tau=2years')
+plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#0000F7','DisplayName', 'tau=2years')
+
+% points
+
+% Liang
+x = x_values(1);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 8, 'HandleVisibility', 'off')
+% Dawson
+x = x_values(2);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongH
+x = x_values(3);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongM
+x = x_values(4);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongL
+x = x_values(5);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 8, 'HandleVisibility', 'off')
 
 % tau = 3years
-tau = 1095; 
-y_points = zeros(size(x_points));
+tau = 1095;   
+y_plot = [];
+x_plot = [];
 for i = 1:length(x_points)
-    y_points(i) = f(x_points(i),tau,v,T_day_mean);
+    sr = fit(x_points(i),tau,v,T_day_mean); %-> change this!
+    if ~isnan(sr)
+        bed = x_points(i);
+        y_plot = [y_plot, sr];
+        x_plot = [x_plot, bed];
+   end
 end
 
-
 %curve  
-plot(x_points, y_points, '--', 'LineWidth', 2, 'Color', '#FD04FC','DisplayName', 'tau=3years')
+plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#FD04FC','DisplayName', 'tau=3years')
+
+
+% points
+
+% Liang
+x = x_values(1);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 8, 'HandleVisibility', 'off')
+% Dawson
+x = x_values(2);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongH
+x = x_values(3);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongM
+x = x_values(4);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongL
+x = x_values(5);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 8, 'HandleVisibility', 'off')
+
 
 % tau = 4years
-tau = 1460; 
-y_points = zeros(size(x_points));
+tau = 1460;   
+y_plot = [];
+x_plot = [];
 for i = 1:length(x_points)
-    y_points(i) = f(x_points(i),tau,v,T_day_mean);
+    sr = fit(x_points(i),tau,v,T_day_mean); %-> change this!
+    if ~isnan(sr)
+        bed = x_points(i);
+        y_plot = [y_plot, sr];
+        x_plot = [x_plot, bed];
+   end
 end
 
-
 %curve  
-plot(x_points, y_points, '--', 'LineWidth', 2, 'Color', '#000000','DisplayName', 'tau=4years')
+plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#000000','DisplayName', 'tau=4years') 
+
+
+% points
+
+% Liang
+x = x_values(1);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'o', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 8, 'HandleVisibility', 'off')
+% Dawson
+x = x_values(2);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'o', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongH
+x = x_values(3);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'o', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongM
+x = x_values(4);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'o', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 8, 'HandleVisibility', 'off')
+% SeongL
+x = x_values(5);
+y = fit(x,tau,v,T_day_mean); %-> change this!
+plot(x, y, 'o', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 8, 'HandleVisibility', 'off')
 
 %legend,lables and title
 legend('Location', 'northeast')
@@ -113,3 +226,23 @@ title('BED')
 %saving the plot
 %saveas(gcf, 'BED.pdf')
 
+%%%%%%%%%%%%%%%%%%%%%%%
+%Functions%
+function result = fit(BED,tau,v,T_day)
+    %v(1) - K50/K0
+    %v(2) - alpha Gy^-1
+    %v(3) - be ta Gy^-2
+    %v(4) - gamma days^-1
+    %v(5) - sigmak/K0
+    %v(6) - delta 
+    denominator = v(5);
+    p = v(2)*BED - ((v(4) * (tau - T_day)) ^ v(6));
+    numerator = exp(-p) - v(1);
+    t = numerator / denominator;
+    if isreal(t)
+        result = 100 * (1/2)*(1-erf(t/sqrt(2)));
+    else
+        result = NaN;
+    end
+ end
+        
