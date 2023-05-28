@@ -38,11 +38,19 @@ end
     %v(6) - delta 
 
 % Initial parameter values - defined by the user
+<<<<<<< HEAD
 v0 = [2.03, 0.010, 0.000666, 0.00542, 0.65, 0.20];
 
 % Define the parameter bounds
 lb = [1.99, 0.009, 0.000647, 0.00495, 0.59, 0.19];
 ub = [2.07, 0.011, 0.000692, 0.00598, 0.71, 0.21];
+=======
+v0 = [2.04, 0.01, 0.00067, 0.0054, 0.65, 0.20];
+
+% Define the parameter bounds
+lb = [1, 0,     0,      0,    0,  0];
+ub = [3, 0.015, 0.0008, 0.01, 1, .5];
+>>>>>>> db52bd3170d654c8c6e9552a4e5fb958cc00edc6
 
 % Fitting function
 f = @(x,v,d,D,T_day) fit(x,v,d,D,T_day,'fitting');
@@ -89,6 +97,8 @@ disp(['delta: ', num2str(v_min(6))]);
 % Plotting
 hold on
 x_points = linspace(1, 70, 71);
+
+v_min = [2.04, 0.01, 0.00067, 0.0054, 0.65, 0.20];
 
 % Liang
 data = load(file_names{1});
