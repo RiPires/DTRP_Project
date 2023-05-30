@@ -41,7 +41,6 @@ clf, % clear the figure
         switch eventdata.Key
             case 'return'
                 set(hObject,'Color','r')
-              
             case 'backspace'
                 set(hObject,'Color','b')
             case 'escape'
