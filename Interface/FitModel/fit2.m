@@ -1,9 +1,7 @@
-clc, clearvars %clear
+function [K50_K0, alpha, beta, gamma, Td, sigmak_K0, delta] = fit2(file_names, labels)
 
 % CSV files
 %Liang,Dawson,SeongH,SeongM,SeongL
-file_names = { 'datafiles/SR_EQ1_L.csv','datafiles/SR_EQ1_D.csv',...
-    'datafiles/SR_EQ1_SH.csv','datafiles/SR_EQ1_SM.csv','datafiles/SR_EQ1_SL.csv'};
 number_studies = numel(file_names);
 % Data from the files:
 %x (tau) - elapsed time in months
@@ -37,20 +35,19 @@ end
     %v(5) - sigmak/K0
     %v(6) - delta 
 
-% Initial parameter values - defined by the user
-<<<<<<< HEAD
+% Initial parameter values - defined by the user HEAD
 v0 = [2.03, 0.010, 0.000666, 0.00542, 0.65, 0.20];
 
 % Define the parameter bounds
 lb = [1.99, 0.009, 0.000647, 0.00495, 0.59, 0.19];
 ub = [2.07, 0.011, 0.000692, 0.00598, 0.71, 0.21];
-=======
+
 v0 = [2.04, 0.01, 0.00067, 0.0054, 0.65, 0.20];
 
 % Define the parameter bounds
 lb = [1, 0,     0,      0,    0,  0];
 ub = [3, 0.015, 0.0008, 0.01, 1, .5];
->>>>>>> db52bd3170d654c8c6e9552a4e5fb958cc00edc6
+
 
 % Fitting function
 f = @(x,v,d,D,T_day) fit(x,v,d,D,T_day,'fitting');
@@ -62,7 +59,9 @@ chi2 = @(v) residuals(file_names, N_values, d_values, D_values, T_day_values, v,
 
 %fmincon
 % Set up the algorithm options
-options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9);
+options = optimoptions('fmincon', ...
+                       'MaxIterations',1000, ...
+                       'TolFun',1e-9,'TolX',1e-9);
 % Run the algorithm
 [v_min,fval,exitflag,output,lambda,grad,hessian] = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
 
@@ -93,6 +92,16 @@ disp(['delta: ', num2str(v_min(6))]);
 % disp(['sigmak/K0: ', num2str(v_min(5)), ' ± ', num2str(un(5))]);
 % disp(['Td: ' num2str(log(2) ./ v_min(4))]);
 % disp(['delta: ', num2str(v_min(6)), ' ± ', num2str(un(6))]);
+
+
+K50_K0 = num2str(v_min(1));
+alpha = num2str(v_min(2));
+beta = num2str(v_min(3));
+gamma = num2str(v_min(4));
+sigmak_K0 = num2str(v_min(5));
+Td = num2str(log(2) ./ v_min(4));
+delta = num2str(v_min(6));
+
 
 % Plotting
 hold on
@@ -274,3 +283,4 @@ function r = residuals(files, N_list, d_list, D_list, T_day_list, v, f)
 end
 
 
+end %main
