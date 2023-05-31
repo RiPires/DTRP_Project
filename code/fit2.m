@@ -38,22 +38,14 @@ end
     %v(6) - delta 
 
 % Initial parameter values - defined by the user
-<<<<<<< HEAD
 v0 = [2.03, 0.010, 0.000666, 0.00542, 0.65, 0.20];
 
 % Define the parameter bounds
 lb = [1.99, 0.009, 0.000647, 0.00495, 0.59, 0.19];
 ub = [2.07, 0.011, 0.000692, 0.00598, 0.71, 0.21];
-=======
-v0 = [2.04, 0.01, 0.00067, 0.0054, 0.65, 0.20];
-
-% Define the parameter bounds
-lb = [1, 0,     0,      0,    0,  0];
-ub = [3, 0.015, 0.0008, 0.01, 1, .5];
->>>>>>> db52bd3170d654c8c6e9552a4e5fb958cc00edc6
 
 % Fitting function
-f = @(x,v,d,D,T_day) fit(x,v,d,D,T_day,'fitting');
+f = @(x,v,d,D,T_day) fitting(x,v,d,D,T_day,'fitting');
 
 
 % Chi-square function
@@ -111,7 +103,7 @@ y = data(:, 2);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 6, 'DisplayName', 'Liang')
 %fitted function  
 for i = 1:length(x_points)
-    sr = fit(x_points(i),v_min,d_values(1),D_values(1),T_day_values(1),'plotting');
+    sr = fitting(x_points(i),v_min,d_values(1),D_values(1),T_day_values(1),'plotting');
     if ~isnan(sr)
         tau = x_points(i);
         y_plot = [y_plot, sr];
@@ -134,7 +126,7 @@ y = data(:, 2);
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 6, 'DisplayName', 'Dawson');
 %fitted function  
 for i = 1:length(x_points)
-    sr = fit(x_points(i),v_min,d_values(2),D_values(2),T_day_values(2),'plotting');
+    sr = fitting(x_points(i),v_min,d_values(2),D_values(2),T_day_values(2),'plotting');
     if ~isnan(sr)
         tau = x_points(i);
         y_plot = [y_plot, sr];
@@ -157,7 +149,7 @@ y = data(:, 2);
 plot(x, y, '^', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 6, 'DisplayName', 'SeongH');
 %fitted function  
 for i = 1:length(x_points)
-    sr = fit(x_points(i),v_min,d_values(3),D_values(3),T_day_values(3),'plotting');
+    sr = fitting(x_points(i),v_min,d_values(3),D_values(3),T_day_values(3),'plotting');
     if ~isnan(sr)
         tau = x_points(i);
         y_plot = [y_plot, sr];
@@ -179,7 +171,7 @@ y = data(:, 2);
 plot(x, y, 's', 'LineWidth', 2, 'Color', '#FD6C6D','MarkerSize', 6, 'DisplayName', 'SeongM');
 %fitted function  
 for i = 1:length(x_points)
-    sr = fit(x_points(i),v_min,d_values(4),D_values(4),T_day_values(4),'plotting');
+    sr = fitting(x_points(i),v_min,d_values(4),D_values(4),T_day_values(4),'plotting');
     if ~isnan(sr)
         tau = x_points(i);
         y_plot = [y_plot, sr];
@@ -201,7 +193,7 @@ y = data(:, 2);
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#46FD4B','MarkerSize', 6, 'DisplayName', 'SeongL');
 %fitted function  
 for i = 1:length(x_points)
-    sr = fit(x_points(i),v_min,d_values(5),D_values(5),T_day_values(5),'plotting');
+    sr = fitting(x_points(i),v_min,d_values(5),D_values(5),T_day_values(5),'plotting');
     if ~isnan(sr)
         tau = x_points(i);
         y_plot = [y_plot, sr];
@@ -225,10 +217,10 @@ title('Fit 2')
 %%%%%%%%%%%%%%%%%%%%%%%
 %Functions%
 
-function result = fit(tau,v,d,D,T_day,purpose)
+function result = fitting(tau,v,d,D,T_day,purpose)
     %v(1) - K50/K0
     %v(2) - alpha Gy^-1
-    %v(3) - be ta Gy^-2
+    %v(3) - beta Gy^-2
     %v(4) - gamma days^-1
     %v(5) - sigmak/K0
     %v(6) - delta 

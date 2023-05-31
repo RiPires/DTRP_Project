@@ -21,26 +21,22 @@ N_values = [128, 35, 83, 51, 24]; %N - number of patients
 d_values = [4.88, 1.5, 1.8, 1.8, 1.8]; %d - dose per fraction Gy/fx
 D_values = [53.6, 61.5, 55, 45, 32.5]; %D - prescription dose Gy
 T_day_values = [28, 42, 37, 37, 37]; %T_day - treatment time in days
-T_day_mean = mean(T_day_values); 
-T_month_values = zeros(size(T_day_values)); %T_month  - treatment time in months
-for i = 1:length(T_day_values)
-    tm = T_day_values(i)/30;
-    T_month_values(i) = tm;
-end  
 
-v = [1.99, 0.0099754, 14.4153, 0.0056126, 0.71, 0.19];
+v = [1.99, 0.0099754, 14.4153, 0.000692, 0.0056126, 0.71, 0.19];
+
 %v - vector with parameters obtained from fit2   
     %v(1) - K50/K0
     %v(2) - alpha Gy^-1
     %v(3) - alpha/beta Gy
-    %v(4) - gamma days^-1
-    %v(5) - sigmak/K0
-    %v(6) - delta 
+    %v(4) - beta
+    %v(5) - gamma days^-1
+    %v(6) - sigmak/K0
+    %v(7) - delta 
 
 %x (BED) - Biologically effective dose (Gy)
 x_values = zeros(size(N_values));
 for i = 1:length(x_values)
-    bed = (1+(d_values(i)/v(3)))*D_values(i) - (v(4)*T_day_values(i))/v(2);
+    bed = (1+(d_values(i)/v(3)))*D_values(i) - (v(5)*T_day_values(i))/v(2);
     x_values(i) = bed;
 end  
 
@@ -61,7 +57,11 @@ tau = 365;
 y_plot = [];
 x_plot = [];
 for i = 1:length(x_points)
-    sr = fit(x_points(i),tau,v,T_day_mean); %-> change this!
+    T_day = t_bed(v(3),v(5),v(4),x_points(i));
+    disp('x:')
+    disp('T');
+    disp(T_day);
+    sr = fitting(x_points(i),tau,v,T_day); 
     if ~isnan(sr)
         bed = x_points(i);
         y_plot = [y_plot, sr];
@@ -76,23 +76,28 @@ plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#FE0100','DisplayName', 'ta
 
 % Liang
 x = x_values(1);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day); 
 plot(x, y, 's', 'LineWidth', 2, 'Color', '#FE0100','MarkerSize', 8, 'HandleVisibility', 'off')
 % Dawson
 x = x_values(2);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 's', 'LineWidth', 2, 'Color', '#FE0100','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongH
 x = x_values(3);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 's', 'LineWidth', 2, 'Color', '#FE0100','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongM
 x = x_values(4);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 's', 'LineWidth', 2, 'Color', '#FE0100','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongL
 x = x_values(5);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 's', 'LineWidth', 2, 'Color', '#FE0100','MarkerSize', 8, 'HandleVisibility', 'off')
 
 
@@ -101,7 +106,8 @@ tau = 730;
 y_plot = [];
 x_plot = [];
 for i = 1:length(x_points)
-    sr = fit(x_points(i),tau,v,T_day_mean); %> change this!
+    T_day = t_bed(v(3),v(5),v(4),x_points(i));
+    sr = fitting(x_points(i),tau,v,T_day);
     if ~isnan(sr)
         bed = x_points(i);
         y_plot = [y_plot, sr];
@@ -116,23 +122,28 @@ plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#0000F7','DisplayName', 'ta
 
 % Liang
 x = x_values(1);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 8, 'HandleVisibility', 'off')
 % Dawson
 x = x_values(2);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongH
 x = x_values(3);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongM
 x = x_values(4);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongL
 x = x_values(5);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 8, 'HandleVisibility', 'off')
 
 % tau = 3years
@@ -140,7 +151,8 @@ tau = 1095;
 y_plot = [];
 x_plot = [];
 for i = 1:length(x_points)
-    sr = fit(x_points(i),tau,v,T_day_mean); %-> change this!
+    T_day = t_bed(v(3),v(5),v(4),x_points(i));
+    sr = fitting(x_points(i),tau,v,T_day);
     if ~isnan(sr)
         bed = x_points(i);
         y_plot = [y_plot, sr];
@@ -156,23 +168,28 @@ plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#FD04FC','DisplayName', 'ta
 
 % Liang
 x = x_values(1);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 8, 'HandleVisibility', 'off')
 % Dawson
 x = x_values(2);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongH
 x = x_values(3);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongM
 x = x_values(4);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongL
 x = x_values(5);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 8, 'HandleVisibility', 'off')
 
 
@@ -181,7 +198,8 @@ tau = 1460;
 y_plot = [];
 x_plot = [];
 for i = 1:length(x_points)
-    sr = fit(x_points(i),tau,v,T_day_mean); %-> change this!
+    T_day = t_bed(v(3),v(5),v(4),x_points(i));
+    sr = fitting(x_points(i),tau,v,T_day);
     if ~isnan(sr)
         bed = x_points(i);
         y_plot = [y_plot, sr];
@@ -197,23 +215,28 @@ plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#000000','DisplayName', 'ta
 
 % Liang
 x = x_values(1);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 8, 'HandleVisibility', 'off')
 % Dawson
 x = x_values(2);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongH
 x = x_values(3);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongM
 x = x_values(4);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 8, 'HandleVisibility', 'off')
 % SeongL
 x = x_values(5);
-y = fit(x,tau,v,T_day_mean); %-> change this!
+T_day = t_bed(v(3),v(5),v(4),x);
+y = fitting(x,tau,v,T_day);
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 8, 'HandleVisibility', 'off')
 
 %legend,lables and title
@@ -227,8 +250,8 @@ title('BED')
 %saveas(gcf, 'BED.pdf')
 
 %%%%%%%%%%%%%%%%%%%%%%%
-%Functions%
-function result = fit(BED,tau,v,T_day)
+% Functions %
+function result = fitting(BED,tau,v,T_day)
     %v(1) - K50/K0
     %v(2) - alpha Gy^-1
     %v(3) - be ta Gy^-2
@@ -244,5 +267,12 @@ function result = fit(BED,tau,v,T_day)
     else
         result = NaN;
     end
- end
+end
+
+% T in function of BED
+function T_BED = t_bed(alpha_beta,gamma,beta,BED)
+    numerator = 7*alpha_beta*BED - 20*alpha_beta - 40;
+    denominator = 10*alpha_beta + 20 - 7*(gamma/beta);
+    T_BED = numerator/denominator;
+end
         
