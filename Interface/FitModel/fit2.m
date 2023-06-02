@@ -74,15 +74,23 @@ options = optimoptions('fmincon', ...
 % Td = 128±12
 % delta = 0.20±0.01
 
+K50_K0 = num2str(v_min(1));
+alpha = num2str(v_min(2));
+beta = num2str(v_min(3));
+gamma = num2str(v_min(4));
+sigmak_K0 = num2str(v_min(5));
+Td = num2str(log(2) ./ v_min(4));
+delta = num2str(v_min(6));
+
 disp('Parameters values of that minimize the sum of squares (value):'); 
-disp(['K50/K0: ', num2str(v_min(1))]);
-disp(['alpha: ', num2str(v_min(2))]);
-disp(['beta: ', num2str(v_min(3))]);
+disp(['K50/K0: ', K50_K0]);
+disp(['alpha: ', alpha]);
+disp(['beta: ', beta]);
 disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
-disp(['gamma: ', num2str(v_min(4))]);
-disp(['sigmak/K0: ', num2str(v_min(5))]);
-disp(['Td: ' num2str(log(2) ./ v_min(4))]);
-disp(['delta: ', num2str(v_min(6))]);
+disp(['gamma: ', gamma]);
+disp(['Td: ' Td]);
+disp(['sigmak/K0: ', sigmak_K0]);
+disp(['delta: ', delta]);
 % disp('Parameters values of that minimize the sum of squares (value ± std):'); 
 % disp(['K50/K0: ', num2str(v_min(1)), ' ± ', num2str(un(1))]);
 % disp(['alpha: ', num2str(v_min(2)), ' ± ', num2str(un(2))]);
@@ -92,15 +100,6 @@ disp(['delta: ', num2str(v_min(6))]);
 % disp(['sigmak/K0: ', num2str(v_min(5)), ' ± ', num2str(un(5))]);
 % disp(['Td: ' num2str(log(2) ./ v_min(4))]);
 % disp(['delta: ', num2str(v_min(6)), ' ± ', num2str(un(6))]);
-
-
-K50_K0 = num2str(v_min(1));
-alpha = num2str(v_min(2));
-beta = num2str(v_min(3));
-gamma = num2str(v_min(4));
-sigmak_K0 = num2str(v_min(5));
-Td = num2str(log(2) ./ v_min(4));
-delta = num2str(v_min(6));
 
 
 % Plotting

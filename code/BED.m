@@ -263,7 +263,7 @@ function result = fitting(BED,tau,v,T_day)
     numerator = exp(-p) - v(1);
     t = numerator / denominator;
     if isreal(t)
-        result = 100 * (1/2)*(1-erf(t/sqrt(2)));
+        result = 100 * (1/2)*(1-erf(t/sqrt(2))); %% Confirmar esta explressão
     else
         result = NaN;
     end

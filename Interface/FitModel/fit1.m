@@ -60,7 +60,7 @@ v0 = [0.042, 0.037, 0.002587, 0.00608, 1268, 0.16];
     
     % Run the algorithm
     %v_min = ga(chi2, 6, [], [], [], [], lb, ub, [], options);
-    [v_min,fval,exitflag,output,lambda,grad,hessian] = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
+    [v_min,~,~,~,~,~,hessian] = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
 
     % Uncertainties
     cm = inv(hessian); %cm -> covariance matrix
@@ -72,22 +72,24 @@ v0 = [0.042, 0.037, 0.002587, 0.00608, 1268, 0.16];
     
     % Display the results
     disp('Parameters values of that minimize the sum of squares (value ± std):'); 
-    disp(['K: ', num2str(v_min(1)), ' ± ', num2str(un(1))]);
-    disp(['alpha: ', num2str(v_min(2)), ' ± ', num2str(un(2))]);
-    disp(['beta: ', num2str(v_min(3)), ' ± ', num2str(un(3))]);
-    disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
-    disp(['gamma: ', num2str(v_min(4)), ' ± ', num2str(un(4))]);
-    disp(['a: ', num2str(v_min(5)), ' ± ', num2str(un(5))]);
-    disp(['Td: ' num2str(log(2) ./ v_min(4))]);
-    disp(['delta: ', num2str(v_min(6)), ' ± ', num2str(un(6))]);
 
-K = num2str(v_min(1));
-alpha = num2str(v_min(2));
-beta = num2str(v_min(3));
-gamma = num2str(v_min(4));
-a = num2str(v_min(5));
-Td = num2str(log(2) ./ v_min(4));
-delta = num2str(v_min(6));
+    K = num2str(v_min(1));
+    alpha = num2str(v_min(2));
+    beta = num2str(v_min(3));
+    gamma = num2str(v_min(4));
+    a = num2str(v_min(5));
+    Td = num2str(log(2) ./ v_min(4));
+    delta = num2str(v_min(6));
+    disp(['K: ', K, ' ± ', num2str(un(1))]);
+    disp(['alpha: ', alpha, ' ± ', num2str(un(2))]);
+    disp(['beta: ', beta, ' ± ', num2str(un(3))]);
+    disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
+    disp(['gamma: ', gamma, ' ± ', num2str(un(4))]);
+    disp(['Td: ' Td]);
+    disp(['a: ', a, ' ± ', num2str(un(5))]);    
+    disp(['delta: ', delta, ' ± ', num2str(un(6))]);
+
+
 
 % Plotting
 hold on
