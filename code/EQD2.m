@@ -26,13 +26,13 @@ v = [2.03, 0.010, 0.000667, 0.005415, 0.65, 0.20];
 % our values    
 % v = [1.99, 0.0099754, 0.000692, 0.0056126, 0.71, 0.19];
 
-%x (BED) - Biologically effective dose (Gy)
+%x (EQD2) - Equivalent dose in 2Gy (Gy)
 x_values = zeros(size(N_values));
 for i = 1:length(x_values)
-    x_values (i) = bed(d_values(i),v(2),v(3),D_values(i),v(4),T_day_values(i));
+    x_values (i) = eqd2(d_values(i),v(2),v(3),D_values(i));
 end  
 
-disp('BED values:'); 
+disp('EQD2 values:'); 
 disp(['Liang: ', num2str(x_values(1))]);
 disp(['Dawson: ', num2str(x_values(2))]);
 disp(['SeongH: ', num2str(x_values(3))]);
@@ -266,10 +266,12 @@ function result = fitting(BED,tau,v,T_day)
     end
 end  
 
-% bed function %
-function b = bed(d,alpha,beta,D,gamma,T)
+% eqd2 function %
+function e = eqd2(d,alpha,beta,D)
     alpha_beta = alpha/beta;
-    b = (1+(d/alpha_beta))*D - (gamma*T)/alpha;
+    numerator = d + alpha_beta;
+    denominator = 2 + alpha_beta;
+    e = D * numerator/denominator;
 
 end
 

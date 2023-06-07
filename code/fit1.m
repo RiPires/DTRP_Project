@@ -48,7 +48,7 @@ ub = [0.05, 0.05, 0.003, 0.007, 1500, 0.30];
 f = @(x,v,d,D,T_day,T_month) real(100*exp(-v(1).*exp(-(v(2).*(1+(d./(v(2)./v(3)))).*D - v(4).*T_day - (v(5).*(x-T_month)).^v(6)))));
 
 % Chi-square function
-chi2 = @(v) residuals(file_names, N_values, d_values, D_values, T_day_values, T_month_values, v, f);
+chi2 = @(v) residuals(file_names, N_values, d_values, D_values, T_day_values, T_month_values, v, f,'fitting');
 
 % Set up the algorithm options
 %options = optimoptions('ga', 'PopulationSize', 10, 'MaxGenerations', 1000);
@@ -61,55 +61,38 @@ options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9)
 % CIs (confidence intervals) calculation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Bootstraping 
-n = 1000; % number of samples
-
-% The function bootstrap generates n new arrays with data for each study
-% Each array is a replica
-
-for i = 1:number_files
-    array_name = sprintf('array_%d', i);
-    eval([array_name, ' = [];']); % Create empty array for a file
-end
-
-disp(array_1); % Display array_1
-
-% bootstrap(file_name, n)
-
-% Generating n vectors v with the fitting parameters by doing
-% n minimizations, one for each replica
-
-v_min_boot = []; 
-% list of vectors with the parameters of the fittings
-% performed on the bootstraping data
-
-% Run the bootstrap function
-boo = bootstrap(file_names, n);
-
-for i = 1:n
-    % Data for each replica
-    data = cell(1, number_studies);
+fit_replicates = []; % array to store the replicas of the fitting parameters
+n = 1000; % number of replicates -> we will get 1000 new values for the fitting parameters
+for i = 1:n 
+    % cell array to store the samples for each replicate
+    generated_files = cell(1, number_studies);
     for j = 1:number_studies
-        data{j} = boo{j}{i};
+        % generating a sample for each file
+        data_study=load(file_names{j});
+        generated_files{j} = sample(data_study);
     end
+
+    % perform the fit
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     % Chi-square function
-    chi2_boo = @(v) boo_residuals(data, number_studies, N_values, d_values, D_values, T_day_values, T_month_values, v, f);
-    v_min_boot = [v_min_boot; fmincon(chi2_boo, v0, [], [], [], [], lb, ub, [], options)];
+    chi2 = @(v) residuals(generated_files, N_values, d_values, D_values, T_day_values, T_month_values, v, f,'bootstrapping');
 
-    % Open a file for writing
-    file = fopen('param_vec.txt', 'w');
-    % Print the vector elements to the file
-    fprintf(file, '%d\n', v_min_boot);
-    % Close the file
-    fclose(file);
+    % Set up the algorithm options
+    options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9);
 
+    % Run the algorithm
+    [v_min_boot,fval,exitflag,output,lambda,grad,hessian] = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    fit_replicates = vertcat(fit_replicates, v_min_boot);
 end
 
-v_boot_1 = v_min_boot(:,1); % K
-v_boot_2 = v_min_boot(:,2); % alpha
-v_boot_3 = v_min_boot(:,3); % beta
-v_boot_4 = v_min_boot(:,4); % gamma
-v_boot_5 = v_min_boot(:,5); % a
-v_boot_6 = v_min_boot(:,6); % delta
+v_boot_1 = fit_replicates(:,1); % K
+v_boot_2 = fit_replicates(:,2); % alpha
+v_boot_3 = fit_replicates(:,3); % beta
+v_boot_4 = fit_replicates(:,4); % gamma
+v_boot_5 = fit_replicates(:,5); % a
+v_boot_6 = fit_replicates(:,6); % delta
 
 % Calculating the 95% confidence interval by excluding
 % the most extreme 2.5% of the values in each direction
@@ -149,24 +132,24 @@ u_6_minus = v_min(6) - conf_interval_6(1);
 
 % Display the results
 disp('Parameters values of that minimize the sum of squares: value (- uncertainty + uncertainty):'); 
-disp(['K: ', num2str(v_min(1)), ' (- ', num2str(u_1_minus),'+',num2str(u_1_plus),')']);
-disp(['alpha: ', num2str(v_min(2)), ' (- ', num2str(u_2_minus),'+',num2str(u_2_plus),')']);
-disp(['beta: ', num2str(v_min(3)), ' (- ', num2str(u_3_minus),'+',num2str(u_3_plus),')']);
+disp(['K: ', num2str(v_min(1)), ' (', num2str(u_1_minus),'+',num2str(u_1_plus),')']);
+disp(['alpha: ', num2str(v_min(2)), ' (', num2str(u_2_minus),'+',num2str(u_2_plus),')']);
+disp(['beta: ', num2str(v_min(3)), ' (', num2str(u_3_minus),'+',num2str(u_3_plus),')']);
 disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
-disp(['gamma: ', num2str(v_min(4)), ' (- ', num2str(u_4_minus),'+',num2str(u_4_plus),')']);
-disp(['a: ', num2str(v_min(5)), ' (- ', num2str(u_5_minus),'+',num2str(u_5_plus),')']);
+disp(['gamma: ', num2str(v_min(4)), ' (', num2str(u_4_minus),'+',num2str(u_4_plus),')']);
+disp(['a: ', num2str(v_min(5)), ' (', num2str(u_5_minus),'+',num2str(u_5_plus),')']);
 disp(['Td: ' num2str(log(2) ./ v_min(4))]);
-disp(['delta: ', num2str(v_min(6)), ' (- ', num2str(u_6_minus),'+',num2str(u_6_plus),')']);
+disp(['delta: ', num2str(v_min(6)), ' (', num2str(u_6_minus),'+',num2str(u_6_plus),')']);
 
 disp('Confidence Intervals:')
-disp(['K: [', num2str(conf_interval_1(2)), ', ', num2str(conf_interval_1(1)),']']);
-disp(['alpha: [', num2str(conf_interval_1(2)), ', ', num2str(conf_interval_1(1)),']']);
-disp(['beta: [', num2str(conf_interval_1(2)), ', ', num2str(conf_interval_1(1)),']']);
+disp(['K: [', num2str(conf_interval_1(1)), ', ', num2str(conf_interval_1(2)),']']);
+disp(['alpha: [', num2str(conf_interval_2(1)), ', ', num2str(conf_interval_2(2)),']']);
+disp(['beta: [', num2str(conf_interval_3(1)), ', ', num2str(conf_interval_3(2)),']']);
 disp(['alpha/beta: ' ]);
-disp(['gamma: [', num2str(conf_interval_1(2)), ', ', num2str(conf_interval_1(1)),']']);
-disp(['a: [', num2str(conf_interval_1(2)), ', ', num2str(conf_interval_1(1)),']']);
+disp(['gamma: [', num2str(conf_interval_4(1)), ', ', num2str(conf_interval_4(2)),']']);
+disp(['a: [', num2str(conf_interval_5(1)), ', ', num2str(conf_interval_5(2)),']']);
 disp(['Td: ' ]);
-disp(['delta: [', num2str(conf_interval_1(2)), ', ', num2str(conf_interval_1(1)),']']);
+disp(['delta: [', num2str(conf_interval_6(1)), ', ', num2str(conf_interval_6(2)),']']);
 
 % Plotting
 hold on
@@ -229,10 +212,15 @@ title('Fit 1')
 %%%%%%%%%%%%%%%%%%%%%%%
 %Functions%
 
-function r = residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, v, f)
+% Calculates the residuals of the points of all datafiles
+function r = residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, v, f,purpose)
     s = 0; %sum for all the points of all the files
     for i = 1:length(files)
-        data = load(files{i});
+        if strcmp(purpose, 'fitting')
+            data = load(files{i});
+        elseif strcmp(purpose, 'bootstrapping')
+            data = files{i};
+        end
         x = data(:, 1); %x (tau) - elapsed time in months
         y = data(:, 2); %y (SR) - survival rate in percentage
         N = N_list(i);
@@ -253,62 +241,24 @@ function r = residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, 
     r = s;
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%
-% Bootstraping 
-% This function generates n replicas for the selected file
-function b_replicas = bootstrap(list_files, file_number, n)
-    b_replicas = []; % array to store the file replicas
-    % Values of the selected study
-    data = load(list_files{file_number});
-    x = data(:, 1); % x (tau) - elapsed time in months
-    y = data(:, 2); % y (SR) - survival rate in percentage
-    arrayLength = length(x); % Get the length of the array (=filesize)
 
-    for i = 1:n % Creating bootstrap for each of the n replicas
-        replica = []; % array to store the new samples
-        % The number of samples is equal to the original file size
-        for j = 1:arrayLength % Creating one sample at time
-            b_sample = zeros(1,2); % Each sample is an array with values x,y
-            % Create a bootstrap sample by selecting a random value of x
-            Index = randi(arrayLength); % Generate a random index within the range of the array
-            b_sample(1) = x(Index); % x value of the sample
-            b_sample(2) = y(Index); % y value of the sample
-            replica = vertcat(replica, b_sample);
-        end
-       
+% Generates a sample for a given datafile (for bootstraping)
+function s = sample(data_file)
+    x = data_file(:, 1); % x (tau) - elapsed time in months
+    y = data_file(:, 2); % y (SR) - survival rate in percentage
+    arrayLength = length(x); % filesize
+    arraySample = []; % array to store the new sample
+    % The length of the sample is equal to the length of the original file
+    for a = 1:arrayLength
+        b_value = zeros(1,2); % Each value is an array with values x,y
+        Index = randi(arrayLength); % Generate a random index within the range of the array
+        b_value(1) = x(Index); % x value of the generated point
+        b_value(2) = y(Index); % y value of the generated point
+        %arraySample=[arraySample,b_value];
+        arraySample = vertcat(arraySample, b_value);
     end
+    s = arraySample;
 end
-   
-        
 
-
-
-%This function calculates the residuals for the generated data
-    function br = boo_residuals(data_boo,number_files, N_list, d_list, D_list, T_day_list, T_month_list, v, f)
-    s = 0; %sum for all the points of all the files
-    for i = 1:number_files
-        data = data_boo{i};
-        x = data(:, 1); %x (tau) - elapsed time in months
-        x = cell2mat(x);
-        y = data(:, 2); %y (SR) - survival rate in percentage
-        y = cell2mat(y);
-        N = N_list(i);
-        d = d_list(i);
-        D = D_list(i);
-        T_day = T_day_list(i);
-        T_month = T_month_list(i);
-        sf = 0; %sum for the points of a specific file
-      
-
-        for j = 1:length(x)
-            y_fit = f(x(j),v,d,D,T_day,T_month);
-            sigma = y(j) .* sqrt(abs((1-y(j)))./N);
-            res = (y_fit - y(j)).^2 / sigma.^2;
-            sf = res + sf;
-        end
-        s = sf + s;
-    end
-    br = s;
-end
 %%%%%%%%%%%%%%%%%%%%%%%
                
