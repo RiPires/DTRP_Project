@@ -101,7 +101,8 @@ handles.uimenu_saveFile = uimenu(handles.uimenu_new,...
         % See Also: dialog, questdlg, errordlg
     end
 
-    function uimenu_save_callback(~,~)        
+    function uimenu_save_callback(~,~)
+        
         % Can be any variable stored in the interface or the workspace
         uisave({'data'},'ListStudents.mat') %Suggested filename
         %See Also: uigetfifle, uiopen
@@ -130,6 +131,8 @@ uipushtool(handles.toolbar, ...
     'Enable',           'on',...
     'ClickedCallback',  @pushbutton_add_Callback)
 
+
+
 %----------------------
 % "Delete File" Button
 %----------------------
@@ -147,6 +150,8 @@ uipushtool(handles.toolbar, ...
     'Tag',              'pushtool_saveplot',...
     'Enable',           'on',...
     'ClickedCallback',  @pushbutton_add_Callback)
+
+
 %----------                                                     ----------%
 
 
@@ -161,6 +166,7 @@ panel_DataList = uipanel('Tag','panel_DataList',...
     'FontSize',         12,...
     'Parent',           mainFig);
 
+% is text no need to keep the handle
 uicontrol(panel_DataList,...
     'Tag',          'text',...
     'Style',        'Text', ...
@@ -337,21 +343,22 @@ handles.panel_DataDetails = uipanel('Parent',mainFig,...
     'ForegroundColor',  'k',...
     'FontSize',         12);
 
+
 %-----------------------------
 % "DATA DETAILS" UITABLE
 %-----------------------------
-handles.uitable = olduitable(handles.panel_DataDetails,...          % the olduitable allows to ToolTip the header
+handles.uitable = olduitable(handles.panel_DataDetails,...   %the olduitable allows to ToolTip the header
     'Tag',              'uitable',...
-    'Data',             TestData,...                                % Data displayed on the table
+    'Data',             TestData,...                                      % Data displayed on the table
     'Units',            'normalized', ...
     'Position',         [0.01 0.05 .98 .95],...
     'ColumnEditable',   true,...
     'ColumnFormat',     {'logical' 'char' 'char' '' '' '' ''},...
-    'ColumnWidth',      85,...                                      % integer number in pixel units
+    'ColumnWidth',      85,...                                    %integer number in pixel units
     'ColumnName',       {'Select' 'Author' 'Label' 'Nr.  Patients' 'D [Gy]' 'd [Gy/fx]' 'Td [days]'},...
     'RowName',          get(handles.listbox_DataSets,'string'),...
-    'Userdata',         TestData,...                                % Data that can be accesible by the user
-    'ColumnToolTip',    {'Select data to perform the fit'...        % Tips when mouse hover
+    'Userdata',         TestData,...                                  % Data that can be accesible by the user
+    'ColumnToolTip',    {'Select data to perform the fit'...    % Tips when mouse hover
                          'The author of the study'...
                          'Label on the plot'...
                          'Number of patients on the study'...
@@ -359,6 +366,9 @@ handles.uitable = olduitable(handles.panel_DataDetails,...          % the olduit
                          'Dose per fraction'...
                          'Treatment time'},...
     'CellEditCallback',  @listbox_DataSets_Callback);
+
+
+
 %----------                                                     ----------%
 
 %--------------------------------------------------------------------------
@@ -373,6 +383,7 @@ handles.panel_Plot = uipanel('Parent',mainFig,...
     'ForegroundColor',  'k',...
     'FontSize',         12);
 
+
 %-------------------------
 % AXES TO PLOT DATA
 %-------------------------
@@ -381,6 +392,7 @@ handles.axes_plotData = axes('Parent',handles.panel_Plot,...
     'Visible','on');
 xlabel('Time (months)'),ylabel('SR (%)'), title('Clinical Data'), hold on
 enableDefaultInteractivity(handles.axes_plotData)
+
  
 %-------------------------
 % AXES TO PLOT FIT
@@ -391,6 +403,7 @@ handles.axes_plotFit = axes('Parent',handles.panel_Plot,...
 xlabel('Time (months)'),ylabel('SR (%)'), title('Fited Data'), hold on
 enableDefaultInteractivity(handles.axes_plotFit)
 %----------                                                     ----------% 
+
 
 %--------------------------------------------------------------------------
 % "MODEL OPTIONS" PANNEL
@@ -586,6 +599,7 @@ function pushbutton_ClearFitAxes_Callback(~,~)
 
 end
 %----------                                                     ----------%
+
 
 %--------------------------------------------------------------------------
 % "FITED PARAMETERS" PANEL
