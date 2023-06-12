@@ -17,17 +17,13 @@ for i = 1:length(T_day_values)
     tm = T_day_values(i)/30;
     T_month_values(i) = tm;
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%points from all the files%%%
-%xx = []; 
-%yy = []; 
-%for i = 1:length(file_names)
-%    data = load(file_names{i});
-%    xx = [xx; data(:,1)];
-%    yy = [yy; data(:,2)];
-%end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+n_param = 6; %n_param - number of fitting parameters
+n_points = 0; %n_points - number of points from all the files
+for i = 1:length(file_names)
+    file = load(file_names{i});
+    s = size(file);
+    n_points = n_points + s(1);
+end
 
 %v - vector with parameters to find   
     %v(1) - K 
@@ -47,16 +43,26 @@ ub = [0.05, 0.05, 0.003, 0.007, 1500, 0.30];
 % Define the fitting function
 f = @(x,v,d,D,T_day,T_month) real(100*exp(-v(1).*exp(-(v(2).*(1+(d./(v(2)./v(3)))).*D - v(4).*T_day - (v(5).*(x-T_month)).^v(6)))));
 
-% Chi-square function
-chi2 = @(v) residuals(file_names, N_values, d_values, D_values, T_day_values, T_month_values, v, f,'fitting');
+% Perform the fit 
+    % v_min_old: vector with parameters of the fitting function 
+    % where we have beta instead of alpha/beta and gamma instead of Td
+    % v_min: vector with parameters of the fitting function
+    % fval: value of the chi-square function
 
-% Set up the algorithm options
-%options = optimoptions('ga', 'PopulationSize', 10, 'MaxGenerations', 1000);
-options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9);
+[v_min_old,v_min,fval] = perform_fit(file_names,N_values,d_values,D_values,T_day_values,T_month_values,v0,lb,ub,f,'fitting');
 
-% Run the algorithm
-%v_min = ga(chi2, 6, [], [], [], [], lb, ub, [], options);
-[v_min,fval,exitflag,output,lambda,grad,hessian] = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
+%v_min - vector with found parameters 
+    %v_min(1) - K 
+    %v_min(2) - alpha Gy^-1
+    %v_min(3) - alpha/beta Gy
+    %v_min(4) - Td days
+    %v_min(5) - a months^-1
+    %v_min(6) - delta 
+
+% Goodness of the fit
+% dof - degrees of freedom
+dof = n_points-n_param;
+goodfit = fval/dof;
 
 % CIs (confidence intervals) calculation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -72,84 +78,74 @@ for i = 1:n
         generated_files{j} = sample(data_study);
     end
 
-    % perform the fit
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % perform the fit for each replica
+        % v_min_boot_old: vector with parameters of the fitting function 
+        % where we have beta instead of alpha/beta and gamma instead of Td
+        % v_min_boot: parameters of the fitting function for that replica
+        % fval_boot: value of the chi-square function
 
-    % Chi-square function
-    chi2 = @(v) residuals(generated_files, N_values, d_values, D_values, T_day_values, T_month_values, v, f,'bootstrapping');
-
-    % Set up the algorithm options
-    options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9);
-
-    % Run the algorithm
-    [v_min_boot,fval,exitflag,output,lambda,grad,hessian] = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    [v_min_boot_old,v_min_boot,fval_boot] = perform_fit(generated_files,N_values,d_values,D_values,T_day_values,T_month_values,v0,lb,ub,f,'bootstrapping');
+   
     fit_replicates = vertcat(fit_replicates, v_min_boot);
 end
 
-v_boot_1 = fit_replicates(:,1); % K
-v_boot_2 = fit_replicates(:,2); % alpha
-v_boot_3 = fit_replicates(:,3); % beta
-v_boot_4 = fit_replicates(:,4); % gamma
-v_boot_5 = fit_replicates(:,5); % a
-v_boot_6 = fit_replicates(:,6); % delta
 
-% Calculating the 95% confidence interval by excluding
-% the most extreme 2.5% of the values in each direction
-conf_interval_1 = prctile(v_boot_1, [2.5, 97.5]);
-conf_interval_2 = prctile(v_boot_2, [2.5, 97.5]);
-conf_interval_3 = prctile(v_boot_3, [2.5, 97.5]);
-conf_interval_4 = prctile(v_boot_4, [2.5, 97.5]);
-conf_interval_5 = prctile(v_boot_5, [2.5, 97.5]);
-conf_interval_6 = prctile(v_boot_6, [2.5, 97.5]);
+% Uncertainties given by the Bootstrapping
+u_boot_plus = zeros(n_param); % array to store the upper uncertainty of the fitting parameters
+u_boot_minus = zeros(n_param); % array to store the lower uncertainty of the fitting parameters
+CI_u = zeros(n_param); % array to store the upper value of the confidence intervals of the fitting parameters
+CI_l = zeros(n_param); % array to store the lower value of the confidence intervals of the fitting parameters
+
+for i = 1:n_param
+    CI = ci_boot(fit_replicates(:,i)); % confidence interval
+    CI_u(i) = CI(2);
+    CI_l(i) = CI(1);
+    [u_plus,u_minus] = uncertainties(v_min(i),CI);
+    u_boot_plus(i) = u_plus;
+    u_boot_minus(i) = u_minus;
+end
 
 
-% Uncertainties
-% K
-u_1_plus = conf_interval_1(2) - v_min(1);
-u_1_minus = v_min(1) - conf_interval_1(1);
-% alpha
-u_2_plus = conf_interval_2(2) - v_min(2);
-u_2_minus = v_min(2) - conf_interval_2(1);
-% beta
-u_3_plus = conf_interval_3(2) - v_min(3);
-u_3_minus = v_min(3) - conf_interval_3(1);
-% gamma
-u_4_plus = conf_interval_4(2) - v_min(4);
-u_4_minus = v_min(4) - conf_interval_4(1);
-% a
-u_5_plus = conf_interval_5(2) - v_min(5);
-u_5_minus = v_min(5) - conf_interval_5(1);
-% delta
-u_6_plus = conf_interval_6(2) - v_min(6);
-u_6_minus = v_min(6) - conf_interval_6(1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Profile-Likelihood
+
+
+% Uncertainties given by the Profile-Likelihood
+% u_boot_plus = zeros(n_param); % array to store the upper uncertainty of the fitting parameters
+% u_boot_minus = zeros(n_param); % array to store the lower uncertainty of the fitting parameters
+% for i = 1:n_param
+%     CI = ci_boot(fit_replicates(:,i),v_min(i)); % confidence interval
+%     [u_plus,u_minus] = uncertainties(v_min(i),CI);
+%     u_boot_plus(i) = u_plus;
+%     u_boot_minus(i) = u_minus;
+% end
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Bundle of Curves
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
- 
 
-% Display the results
-disp('Parameters values of that minimize the sum of squares: value (- uncertainty + uncertainty):'); 
-disp(['K: ', num2str(v_min(1)), ' (', num2str(u_1_minus),'+',num2str(u_1_plus),')']);
-disp(['alpha: ', num2str(v_min(2)), ' (', num2str(u_2_minus),'+',num2str(u_2_plus),')']);
-disp(['beta: ', num2str(v_min(3)), ' (', num2str(u_3_minus),'+',num2str(u_3_plus),')']);
-disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
-disp(['gamma: ', num2str(v_min(4)), ' (', num2str(u_4_minus),'+',num2str(u_4_plus),')']);
-disp(['a: ', num2str(v_min(5)), ' (', num2str(u_5_minus),'+',num2str(u_5_plus),')']);
-disp(['Td: ' num2str(log(2) ./ v_min(4))]);
-disp(['delta: ', num2str(v_min(6)), ' (', num2str(u_6_minus),'+',num2str(u_6_plus),')']);
+parameters_names = {'K','alpha','alpha/beta','Td','a','delta'};
 
-disp('Confidence Intervals:')
-disp(['K: [', num2str(conf_interval_1(1)), ', ', num2str(conf_interval_1(2)),']']);
-disp(['alpha: [', num2str(conf_interval_2(1)), ', ', num2str(conf_interval_2(2)),']']);
-disp(['beta: [', num2str(conf_interval_3(1)), ', ', num2str(conf_interval_3(2)),']']);
-disp(['alpha/beta: ' ]);
-disp(['gamma: [', num2str(conf_interval_4(1)), ', ', num2str(conf_interval_4(2)),']']);
-disp(['a: [', num2str(conf_interval_5(1)), ', ', num2str(conf_interval_5(2)),']']);
-disp(['Td: ' ]);
-disp(['delta: [', num2str(conf_interval_6(1)), ', ', num2str(conf_interval_6(2)),']']);
+% Save the results in a file
+myfile = fopen('./results/fit1.txt', 'w');  
+
+fprintf(myfile, 'Goodness of the fit: %f\n', goodfit);
+fprintf(myfile, '\n');
+fprintf(myfile, 'Uncertainties given by the Bootstrapping Method:\n');
+fprintf(myfile, 'Parameters values that minimize the sum of squares: value [- uncertainty + uncertainty]:\n');
+fprintf(myfile, '-----------------\n');
+formatSpec = '%s: %.6f [-%.6f + %.6f]\n CI: [%.6f,%.6f]\n';
+for i = 1:length(parameters_names)
+    fprintf(myfile, formatSpec, parameters_names{i}, v_min(i), u_boot_minus(i), u_boot_plus(i),CI_l(i),CI_u(i));
+end
+fprintf(myfile, '\n');
+fprintf(myfile, 'Uncertainties given by the Profile-Likelihood Method:\n');
+fprintf(myfile, '-----------------\n');
+fprintf(myfile, 'Parameters values that minimize the sum of squares: value [- uncertainty + uncertainty]:\n');
+
+
+% Close the file
+fclose(myfile);
+
 
 % Plotting
 hold on
@@ -161,7 +157,7 @@ y = data(:, 2);
 %original points
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 6, 'DisplayName', 'Liang')
 %fitted function   
-plot(x_points, f(x_points,v_min,d_values(1),D_values(1),T_day_values(1),T_month_values(1)), '--', 'LineWidth', 2, 'Color', '#FD04FC','HandleVisibility', 'off')
+plot(x_points, f(x_points,v_min_old,d_values(1),D_values(1),T_day_values(1),T_month_values(1)), '--', 'LineWidth', 2, 'Color', '#FD04FC','HandleVisibility', 'off')
 
 % Dawson
 data = load(file_names{2});
@@ -170,7 +166,7 @@ y = data(:, 2);
 %original points
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 6, 'DisplayName', 'Dawson');
 %fitted function
-plot(x_points, f(x_points,v_min,d_values(2),D_values(2),T_day_values(2),T_month_values(2)), '--', 'LineWidth', 2, 'Color', '#0000F7','HandleVisibility', 'off');
+plot(x_points, f(x_points,v_min_old,d_values(2),D_values(2),T_day_values(2),T_month_values(2)), '--', 'LineWidth', 2, 'Color', '#0000F7','HandleVisibility', 'off');
 
 % SeongH
 data = load(file_names{3});
@@ -179,7 +175,7 @@ y = data(:, 2);
 %original points
 plot(x, y, '^', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 6, 'DisplayName', 'SeongH')
 %fitted function
-plot(x_points, f(x_points,v_min,d_values(3),D_values(3),T_day_values(3),T_month_values(3)), '--', 'LineWidth', 2, 'Color', '#000000','HandleVisibility', 'off')
+plot(x_points, f(x_points,v_min_old,d_values(3),D_values(3),T_day_values(3),T_month_values(3)), '--', 'LineWidth', 2, 'Color', '#000000','HandleVisibility', 'off')
 
 % SeongM
 data = load(file_names{4});
@@ -188,7 +184,7 @@ y = data(:, 2);
 %original points
 plot(x, y, 's', 'LineWidth', 2, 'Color', '#FD6C6D','MarkerSize', 6, 'DisplayName', 'SeongM')
 %fitted function
-plot(x_points, f(x_points,v_min,d_values(4),D_values(4),T_day_values(4),T_month_values(4)), '--', 'LineWidth', 2, 'Color', '#FD6C6D','HandleVisibility', 'off')
+plot(x_points, f(x_points,v_min_old,d_values(4),D_values(4),T_day_values(4),T_month_values(4)), '--', 'LineWidth', 2, 'Color', '#FD6C6D','HandleVisibility', 'off')
 
 % SeongL
 data = load(file_names{5});
@@ -197,20 +193,49 @@ y = data(:, 2);
 %original points
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#46FD4B','MarkerSize', 6, 'DisplayName', 'SeongL')
 %fitted function
-plot(x_points, f(x_points,v_min,d_values(5),D_values(5),T_day_values(5),T_month_values(5)), '--', 'LineWidth', 2, 'Color', '#46FD4B','HandleVisibility', 'off')
+plot(x_points, f(x_points,v_min_old,d_values(5),D_values(5),T_day_values(5),T_month_values(5)), '--', 'LineWidth', 2, 'Color', '#46FD4B','HandleVisibility', 'off')
 
 %legend,lables and title
 legend('Location', 'northeast')
 legend('boxoff')
-xlabel('elapsed time from beginning of RT (Month)-tau')
-ylabel('Survival Rate (%)-SR')
-title('Fit 1')
+
+xlabel('Elapsed Time From Beginning of RT (Month)- $\tau$', 'Interpreter', 'latex');
+ylabel('Survival Rate - $SR (\%)$', 'Interpreter', 'latex');
+title('Fit 1','Interpreter','latex')
 
 %saving the plot
-%saveas(gcf, 'fit1.pdf')
+saveas(gcf, './results/fit1.pdf')
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %Functions%
+
+% Performs the fit and returns the fitting parameters and the value of the chi-square function
+function [param,new_param,chi2_val] = perform_fit(files,N,d,D,T_day,T_month,initial_guess,lower_bound,upper_bound,fitting_function,purpose)
+    % Vector with fitting parameters -> v
+    % Chi-square function
+    chi2 = @(v) residuals(files, N, d, D, T_day, T_month, v, fitting_function,purpose);
+    % Set up the algorithm options
+    options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9);
+    % Run the algorithm
+        % param->parameters that minimize the chi-square function
+        % chi2_val->value of the chi-square function
+    [param,chi2_val] = fmincon(chi2, initial_guess, [], [], [], [], lower_bound, upper_bound, [], options);
+    % new list of parameters, where two of them were changed:
+    % beta -> alpha/beta
+    % gamma -> Td
+    new_param = param;
+    alpha_beta = new_param(2)/new_param(3);
+    new_param(3) = alpha_beta;
+    Td = log(2)/new_param(4);
+    new_param(4) = Td;
+    % new param entries:
+        %param(1) - K 
+        %param(2) - alpha Gy^-1
+        %param(3) - alpha/beta Gy
+        %param(4) - Td days
+        %param(5) - a months^-1
+        %param(6) - delta 
+end    
 
 % Calculates the residuals of the points of all datafiles
 function r = residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, v, f,purpose)
@@ -260,5 +285,26 @@ function s = sample(data_file)
     s = arraySample;
 end
 
+% Returns the confidence interval of a fitting parameter with replicas 
+% obtained from Boostrapping
+function ci = ci_boot(param_rep)
+    % param_rep -> replicates for the parameter in question
+    % Calculating the 95% confidence interval by excluding
+    % the most extreme 2.5% of the values in each direction
+    ci = prctile(param_rep,[2.5, 97.5]);
+end
+
+% Gives the uncertainty lower and upper bounds
+function [u_p,u_m] = uncertainties(parameter,ci)
+    % parameter -> value of the fitting parameter
+    % ci -> confidence interval of that parameter
+    u_p = ci(2) - parameter;
+    u_m = parameter - ci(1);
+
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%
+               
+
+
                

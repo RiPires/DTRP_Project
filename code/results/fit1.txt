@@ -1,0 +1,21 @@
+Goodness of the fit: 0.284089
+
+Uncertainties given by the Bootstrapping Method:
+Parameters values that minimize the sum of squares: value [- uncertainty + uncertainty]:
+-----------------
+K: 0.049989 [-0.003901 + 0.000011]
+ CI: [0.046088,0.050000]
+alpha: 0.026079 [-0.007995 + 0.010602]
+ CI: [0.018084,0.036681]
+alpha/beta: 8.879193 [-2.812172 + 4.501590]
+ CI: [6.067020,13.380782]
+Td: 99.116466 [-0.095440 + 177.060118]
+ CI: [99.021026,276.176585]
+a: 1498.913405 [-62.204917 + 1.086592]
+ CI: [1436.708488,1499.999997]
+delta: 0.149993 [-0.007101 + 0.010413]
+ CI: [0.142892,0.160407]
+
+Uncertainties given by the Profile-Likelihood Method:
+-----------------
+Parameters values that minimize the sum of squares: value [- uncertainty + uncertainty]:

@@ -17,17 +17,13 @@ for i = 1:length(T_day_values)
     tm = T_day_values(i)/30;
     T_month_values(i) = tm;
 end  
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%points from all the files%%%
-%xx = []; 
-%yy = []; 
-%for i = 1:length(file_names)
-%    data = load(file_names{i});
-%    xx = [xx; data(:,1)];
-%    yy = [yy; data(:,2)];
-%end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+n_param = 6; %n_param - number of fitting parameters
+n_points = 0; %n_points - number of points from all the files
+for i = 1:length(file_names)
+    file = load(file_names{i});
+    s = size(file);
+    n_points = n_points + s(1);
+end
 
 %v - vector with parameters to find   
     %v(1) - K50/K0
@@ -47,50 +43,113 @@ ub = [2.07, 0.011, 0.000692, 0.00598, 0.71, 0.21];
 % Fitting function
 f = @(x,v,d,D,T_day) fitting(x,v,d,D,T_day,'fitting');
 
+% Perform the fit 
+    % v_min_old: vector with parameters of the fitting function 
+    % where we have beta instead of alpha/beta and gamma instead of Td
+    % v_min: vector with parameters of the fitting function
+    % fval: value of the chi-square function
 
-% Chi-square function
-chi2 = @(v) residuals(file_names, N_values, d_values, D_values, T_day_values, v, f);
+[v_min_old,v_min,fval] = perform_fit(file_names,N_values,d_values,D_values,T_day_values,v0,lb,ub,f,'fitting');
+
+%v_min - vector with found parameters 
+    %v_min(1) - K 
+    %v_min(2) - alpha Gy^-1
+    %v_min(3) - alpha/beta Gy
+    %v_min(4) - Td days
+    %v_min(5) - a months^-1
+    %v_min(6) - delta 
+
+% Goodness of the fit
+% dof - degrees of freedom
+dof = n_points-n_param;
+goodfit = fval/dof;
+
+% CIs (confidence intervals) calculation
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Bootstraping 
+fit_replicates = []; % array to store the replicas of the fitting parameters
+n = 1000; % number of replicates -> we will get 1000 new values for the fitting parameters
+for i = 1:n 
+    % cell array to store the samples for each replicate
+    generated_files = cell(1, number_studies);
+    for j = 1:number_studies
+        % generating a sample for each file
+        data_study=load(file_names{j});
+        generated_files{j} = sample(data_study);
+    end
+
+    % perform the fit for each replica
+        % v_min_boot_old: vector with parameters of the fitting function 
+        % where we have beta instead of alpha/beta and gamma instead of Td
+        % v_min_boot: parameters of the fitting function for that replica
+        % fval_boot: value of the chi-square function
+
+    [v_min_boot_old,v_min_boot,fval_boot] = perform_fit(generated_files,N_values,d_values,D_values,T_day_values,v0,lb,ub,f,'bootstrapping');
+   
+    fit_replicates = vertcat(fit_replicates, v_min_boot);
+end
 
 
-%fmincon
-% Set up the algorithm options
-options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9);
-% Run the algorithm
-[v_min,fval,exitflag,output,lambda,grad,hessian] = fmincon(chi2, v0, [], [], [], [], lb, ub, [], options);
+% Uncertainties given by the Bootstrapping
+u_boot_plus = zeros(n_param); % array to store the upper uncertainty of the fitting parameters
+u_boot_minus = zeros(n_param); % array to store the lower uncertainty of the fitting parameters
+CI_u = zeros(n_param); % array to store the upper value of the confidence intervals of the fitting parameters
+CI_l = zeros(n_param); % array to store the lower value of the confidence intervals of the fitting parameters
 
-% Display the results
-% real results
-% K50/K0 = 2.03±0.04
-% alpha = 0.010±0.001
-% alpha/beta = 15.0±2.0
-% sigmak/K0 = 0.65±0.06
-% Td = 128±12
-% delta = 0.20±0.01
+for i = 1:n_param
+    CI = ci_boot(fit_replicates(:,i)); % confidence interval
+    CI_u(i) = CI(2);
+    CI_l(i) = CI(1);
+    [u_plus,u_minus] = uncertainties(v_min(i),CI);
+    u_boot_plus(i) = u_plus;
+    u_boot_minus(i) = u_minus;
+end
 
-disp('Parameters values of that minimize the sum of squares (value):'); 
-disp(['K50/K0: ', num2str(v_min(1))]);
-disp(['alpha: ', num2str(v_min(2))]);
-disp(['beta: ', num2str(v_min(3))]);
-disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
-disp(['gamma: ', num2str(v_min(4))]);
-disp(['sigmak/K0: ', num2str(v_min(5))]);
-disp(['Td: ' num2str(log(2) ./ v_min(4))]);
-disp(['delta: ', num2str(v_min(6))]);
-% disp('Parameters values of that minimize the sum of squares (value ± std):'); 
-% disp(['K50/K0: ', num2str(v_min(1)), ' ± ', num2str(un(1))]);
-% disp(['alpha: ', num2str(v_min(2)), ' ± ', num2str(un(2))]);
-% disp(['beta: ', num2str(v_min(3)), ' ± ', num2str(un(3))]);
-% disp(['alpha/beta: ' num2str(v_min(2)./v_min(3))]);
-% disp(['gamma: ', num2str(v_min(4)), ' ± ', num2str(un(4))]);
-% disp(['sigmak/K0: ', num2str(v_min(5)), ' ± ', num2str(un(5))]);
-% disp(['Td: ' num2str(log(2) ./ v_min(4))]);
-% disp(['delta: ', num2str(v_min(6)), ' ± ', num2str(un(6))]);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Profile-Likelihood
+
+
+% Uncertainties given by the Profile-Likelihood
+% u_boot_plus = zeros(n_param); % array to store the upper uncertainty of the fitting parameters
+% u_boot_minus = zeros(n_param); % array to store the lower uncertainty of the fitting parameters
+% for i = 1:n_param
+%     CI = ci_boot(fit_replicates(:,i),v_min(i)); % confidence interval
+%     [u_plus,u_minus] = uncertainties(v_min(i),CI);
+%     u_boot_plus(i) = u_plus;
+%     u_boot_minus(i) = u_minus;
+% end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+parameters_names = {'K50/K0','alpha','alpha/beta','Td','sigmak/K0','delta'};
+
+% Save the results in a file
+myfile = fopen('./results/fit2.txt', 'w');  
+
+fprintf(myfile, 'Goodness of the fit: %f\n', goodfit);
+fprintf(myfile, '\n');
+fprintf(myfile, 'Uncertainties given by the Bootstrapping Method:\n');
+fprintf(myfile, 'Parameters values that minimize the sum of squares: value [- uncertainty + uncertainty]:\n');
+fprintf(myfile, '-----------------\n');
+formatSpec = '%s: %.6f [-%.6f + %.6f]\n CI: [%.6f,%.6f]\n';
+for i = 1:length(parameters_names)
+    fprintf(myfile, formatSpec, parameters_names{i}, v_min(i), u_boot_minus(i), u_boot_plus(i),CI_l(i),CI_u(i));
+end
+fprintf(myfile, '\n');
+fprintf(myfile, 'Uncertainties given by the Profile-Likelihood Method:\n');
+fprintf(myfile, '-----------------\n');
+fprintf(myfile, 'Parameters values that minimize the sum of squares: value [- uncertainty + uncertainty]:\n');
+
+
+% Close the file
+fclose(myfile);
+
 
 % Plotting
 hold on
 x_points = linspace(1, 70, 71);
-
-v_min = [2.04, 0.01, 0.00067, 0.0054, 0.65, 0.20];
 
 % Liang
 data = load(file_names{1});
@@ -103,7 +162,7 @@ y = data(:, 2);
 plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 6, 'DisplayName', 'Liang')
 %fitted function  
 for i = 1:length(x_points)
-    sr = fitting(x_points(i),v_min,d_values(1),D_values(1),T_day_values(1),'plotting');
+    sr = fitting(x_points(i),v_min_old,d_values(1),D_values(1),T_day_values(1),'plotting');
     if ~isnan(sr)
         tau = x_points(i);
         y_plot = [y_plot, sr];
@@ -126,7 +185,7 @@ y = data(:, 2);
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 6, 'DisplayName', 'Dawson');
 %fitted function  
 for i = 1:length(x_points)
-    sr = fitting(x_points(i),v_min,d_values(2),D_values(2),T_day_values(2),'plotting');
+    sr = fitting(x_points(i),v_min_old,d_values(2),D_values(2),T_day_values(2),'plotting');
     if ~isnan(sr)
         tau = x_points(i);
         y_plot = [y_plot, sr];
@@ -149,7 +208,7 @@ y = data(:, 2);
 plot(x, y, '^', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 6, 'DisplayName', 'SeongH');
 %fitted function  
 for i = 1:length(x_points)
-    sr = fitting(x_points(i),v_min,d_values(3),D_values(3),T_day_values(3),'plotting');
+    sr = fitting(x_points(i),v_min_old,d_values(3),D_values(3),T_day_values(3),'plotting');
     if ~isnan(sr)
         tau = x_points(i);
         y_plot = [y_plot, sr];
@@ -171,7 +230,7 @@ y = data(:, 2);
 plot(x, y, 's', 'LineWidth', 2, 'Color', '#FD6C6D','MarkerSize', 6, 'DisplayName', 'SeongM');
 %fitted function  
 for i = 1:length(x_points)
-    sr = fitting(x_points(i),v_min,d_values(4),D_values(4),T_day_values(4),'plotting');
+    sr = fitting(x_points(i),v_min_old,d_values(4),D_values(4),T_day_values(4),'plotting');
     if ~isnan(sr)
         tau = x_points(i);
         y_plot = [y_plot, sr];
@@ -193,7 +252,7 @@ y = data(:, 2);
 plot(x, y, 'o', 'LineWidth', 2, 'Color', '#46FD4B','MarkerSize', 6, 'DisplayName', 'SeongL');
 %fitted function  
 for i = 1:length(x_points)
-    sr = fitting(x_points(i),v_min,d_values(5),D_values(5),T_day_values(5),'plotting');
+    sr = fitting(x_points(i),v_min_old,d_values(5),D_values(5),T_day_values(5),'plotting');
     if ~isnan(sr)
         tau = x_points(i);
         y_plot = [y_plot, sr];
@@ -207,15 +266,45 @@ hold on;
 %legend,lables and title
 legend('Location', 'northeast')
 legend('boxoff')
-xlabel('elapsed time from beginning of RT (Month)-tau')
-ylabel('Survival Rate (%)-SR')
-title('Fit 2')
+
+xlabel('Elapsed Time From Beginning of RT (Month)- $\tau$', 'Interpreter', 'latex');
+ylabel('Survival Rate - $SR (\%)$', 'Interpreter', 'latex');
+title('Fit 2','Interpreter','latex')
 
 %saving the plot
-%saveas(gcf, 'fit2.pdf')
+saveas(gcf, './results/fit2.pdf')
 
 %%%%%%%%%%%%%%%%%%%%%%%
 %Functions%
+
+% Performs the fit and returns the fitting parameters and the value of the chi-square function
+function [param,new_param,chi2_val] = perform_fit(files,N,d,D,T_day,initial_guess,lower_bound,upper_bound,fitting_function,purpose)
+    % Vector with fitting parameters -> v
+    % Chi-square function
+    chi2 = @(v) residuals(files, N, d, D, T_day, v, fitting_function,purpose);
+    % Set up the algorithm options
+    options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9);
+    % Run the algorithm
+        % param->parameters that minimize the chi-square function
+        % chi2_val->value of the chi-square function
+    [param,chi2_val] = fmincon(chi2, initial_guess, [], [], [], [], lower_bound, upper_bound, [], options);
+    % new list of parameters, where two of them were changed:
+    % beta -> alpha/beta
+    % gamma -> Td
+    new_param = param;
+    alpha_beta = new_param(2)/new_param(3);
+    new_param(3) = alpha_beta;
+    Td = log(2)/new_param(4);
+    new_param(4) = Td;
+    % new param entries:
+        %param(1) - K50/K0 
+        %param(2) - alpha Gy^-1
+        %param(3) - alpha/beta Gy
+        %param(4) - Td days
+        %param(5) - sigmak/K0
+        %param(6) - delta 
+end 
+
 
 function result = fitting(tau,v,d,D,T_day,purpose)
     %v(1) - K50/K0
@@ -242,10 +331,15 @@ function result = fitting(tau,v,d,D,T_day,purpose)
  end
         
 
-function r = residuals(files, N_list, d_list, D_list, T_day_list, v, f)
+% Calculates the residuals of the points of all datafiles
+function r = residuals(files, N_list, d_list, D_list, T_day_list, v, f,purpose)
     s = 0; %sum for all the points of all the files
     for i = 1:length(files)
-        data = load(files{i});
+        if strcmp(purpose, 'fitting')
+            data = load(files{i});
+        elseif strcmp(purpose, 'bootstrapping')
+            data = files{i};
+        end
         x = data(:, 1); %x (tau) - elapsed time in months
         y = data(:, 2); %y (SR) - survival rate in percentage
         N = N_list(i);
@@ -264,5 +358,48 @@ function r = residuals(files, N_list, d_list, D_list, T_day_list, v, f)
     end
     r = s;
 end
+
+
+% Generates a sample for a given datafile (for bootstraping)
+function s = sample(data_file)
+    x = data_file(:, 1); % x (tau) - elapsed time in months
+    y = data_file(:, 2); % y (SR) - survival rate in percentage
+    arrayLength = length(x); % filesize
+    arraySample = []; % array to store the new sample
+    % The length of the sample is equal to the length of the original file
+    for a = 1:arrayLength
+        b_value = zeros(1,2); % Each value is an array with values x,y
+        Index = randi(arrayLength); % Generate a random index within the range of the array
+        b_value(1) = x(Index); % x value of the generated point
+        b_value(2) = y(Index); % y value of the generated point
+        %arraySample=[arraySample,b_value];
+        arraySample = vertcat(arraySample, b_value);
+    end
+    s = arraySample;
+end
+
+% Returns the confidence interval of a fitting parameter with replicas 
+% obtained from Boostrapping
+function ci = ci_boot(param_rep)
+    % param_rep -> replicates for the parameter in question
+    % Calculating the 95% confidence interval by excluding
+    % the most extreme 2.5% of the values in each direction
+    ci = prctile(param_rep,[2.5, 97.5]);
+end
+
+% Gives the uncertainty lower and upper bounds
+function [u_p,u_m] = uncertainties(parameter,ci)
+    % parameter -> value of the fitting parameter
+    % ci -> confidence interval of that parameter
+    u_p = ci(2) - parameter;
+    u_m = parameter - ci(1);
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%
+               
+
+
+
 
 
