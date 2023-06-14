@@ -30,8 +30,8 @@ v0 = cell2mat(Bounds(1,:));
 % Define the parameter bounds
 %lb = [1.99, 0.009, 0.000647, 0.00495, 0.59, 0.19];
 %ub = [2.07, 0.011, 0.000692, 0.00598, 0.71, 0.21];
-lb = cell2mat(Bounds(2,:));
-ub = cell2mat(Bounds(3,:));
+lb = cell2mat(Bounds(1,:));
+ub = cell2mat()
 
 
 % Fitting function

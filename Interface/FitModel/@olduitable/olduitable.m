@@ -1315,10 +1315,10 @@ classdef olduitable < matlab.mixin.SetGet
                 
                 % update the column header's height according to the line count
                 if newlines == 0
-                    d.height = 24;
+                    d.height = 60; %%%   Header Height   %%%
                 else
                     %d.height = 1.2*obj.fontMetrics.getHeight*(1+newlines); % line-height~1.2xfontHeight
-                    d.height = 1.2*16*(1+newlines);
+                    d.height = 1.2*32*(1+newlines);
                 end                
             end
             

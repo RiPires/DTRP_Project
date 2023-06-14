@@ -1,4 +1,4 @@
-function main
+function main_dev
 % function main
 % HELP: this function launches a GUI (Graphical User Interface) to perform
 %      survival rate (SR) modeling by fitting different survival models to
