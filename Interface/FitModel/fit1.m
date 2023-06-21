@@ -80,7 +80,6 @@ disp(['delta: ', delta, ' ± ', num2str(un(6))]);
 
 
 % Plotting
-
 labels = cell2mat(DataDetails(:,3));
 
 hold on
@@ -92,7 +91,6 @@ for i = 1:numel(file_names)
         y = data(:, 2);
 
         %original points
-
         my_color = rand(1,3);
         all_marks = {'o','+','*','x','s','d','^','v','>','<','p','h'};
 
@@ -102,9 +100,10 @@ for i = 1:numel(file_names)
             'LineWidth', 2, ...
             'Color', my_color, ...
             'MarkerSize', 6, ...    
-            'DisplayName', labels(i))
+            'DisplayName', labels(i,:))
         
-        fit_label = string(strcat('Fit-',labels(i)));
+        fit_label = string(strcat('Fit-',labels(i,:)));
+
         %fitted function
         add_color = [my_color(1)/(my_color(1)+0.7), my_color(2)/(my_color(2)+0.7), my_color(3)/(my_color(3)+0.7)];
         plot(x_points, f(x_points,v_min,d_values(i),D_values(i),T_day_values(i),T_month_values(i)), ...
@@ -114,7 +113,6 @@ for i = 1:numel(file_names)
             'DisplayName', fit_label,...
             'HandleVisibility', 'on')
  end
-
 
 %legend,lables and title
 legend('Location', 'northeast')
@@ -127,28 +125,6 @@ title('Fit 1')
 %saving the plot
 %saveas(gcf, 'fit1.pdf')
 
-function r = residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, v, f)
-    s = 0; %sum for all the points of all the files
-    for i = 1:length(files)
-        data = load(files{i});
-        x = data(:, 1); %x (tau) - elapsed time in months
-        y = data(:, 2); %y (SR) - survival rate in percentage
-        N = N_list(i);
-        d = d_list(i);
-        D = D_list(i);
-        T_day = T_day_list(i);
-        T_month = T_month_list(i);
-        sf = 0; %sum for the points of a specific file
 
-        for j = 1:length(x)
-            y_fit = f(x(j),v,d,D,T_day,T_month);
-            sigma = y(j) .* sqrt(abs((1-y(j)))./N);
-            res = (y_fit - y(j)).^2 / sigma.^2;
-            sf = res + sf;
-        end
-        s = sf + s;
-    end
-    r = s;
-end
 
 end %main

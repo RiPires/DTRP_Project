@@ -1,15 +1,26 @@
 function main
 % function main
-% HELP: this function launches a GUI (Graphical User Interface) to perform
-%      survival rate (SR) modeling by fitting different survival models to
-%      clinical data inputed by the user
+% HELP: this function launches the RADIANCE: Radiotherapy Survival Rate Modeling Interface,
+%       a GUI (Graphical User Interface) to perform
+%       survival rate (SR) modeling by fitting different survival models to
+%       clinical data inputed by the user
 %      
 %
 % INPUT
-% * none
+%   The function main requires NO INPUT to launch the interface!
+%  
+%  While runing and interacting with the interface, the user may prompt
+% different kinds of inputs, such as: adding new files via the uigetfile
+% class, edit contents of uitable objects, type output files' names, etc.
 %
 % OUTPUT
-% * none
+%  The function main returns NO OUTPUT when launching the interface!
+%
+%  While runing and interacting with the interface, the user may prompt
+% different kinds of outputs, such as: result of fited parameters and
+% uncertainties; clinical data, fiting SR over time and over BED plots
+% 
+%
 %
 % SEE ALSO: uimenu, uitoolbar, uipushtool, uipanel, uicontrol, uigetfile,
 %           uibuttongroup, 
@@ -17,7 +28,7 @@ function main
 % -------------------------------------------------------------------------
 % Authors:
 % R. Pires
-% A. Pardal
+% A. Pardal60
 % R. Santos
 % 
 % Last Update: 20/06/2023
@@ -58,17 +69,16 @@ set(mainFig ,'Name','RADIANCE: Radiotherapy Survival Rate Modeling Interface',..
     'WindowState', 'maximized',...        % Maximize window by default
     'KeyPressFcn',@figure_keyPressFcn,... % What happens when certain keys are pressed on the keyboard
     'MenuBar','None');
-clf, % clear the figure
+clf,                                      % clear the figure
 
     function figure_keyPressFcn(hObject,eventdata)
-                
+               %%%   !!!   TO DO   !!!   %%% 
         switch eventdata.Key
             case 'return'
                 pushbutton_Fit_Callback() 
             case 'backspace'
                 set(hObject,'Color','b')
             case 'escape'
-                pushbutton_ClearAxes_Callback()
                 pushbutton_ClearFitAxes_Callback()       
         end
     end
@@ -92,36 +102,104 @@ axis equal off
 %--------------------------------------------------------------------------
 % MENU
 %--------------------------------------------------------------------------
-handles.uimenu_new = uimenu(mainFig, ...
-        	                'Label','New');
+%%%   !!!   TO DO   !!!   %%% 
 
-handles.uimenu_newFile = uimenu(handles.uimenu_new,...
-                                'Label','New File...',...
-                                'Callback',@uimenu_new_callback);
+%-----------
+% FILE
+%-----------
+handles.uimenu_file = uimenu(mainFig, ...   % Menu "File"
+        	                'Label','File');
 
-handles.uimenu_saveFile = uimenu(handles.uimenu_new,...
-                                 'Label','Save...',...
-                                 'Separator','on',...
-                                 'Callback',@uimenu_save_callback);
+    handles.uimenu_newFile = uimenu(handles.uimenu_file,...
+                                   'Label','New File...',...
+                                   'Callback',@uimenu_new_callback);
+    
+    handles.uimenu_saveFile = uimenu(handles.uimenu_file,...
+                                    'Label','Save...',...
+                                    'Separator','on',...
+                                    'Callback',@uimenu_save_callback);
+    
+        function uimenu_new_callback(~,~)
+            
+            warndlg(['No action will happen when Pressing OK because'...
+                ' this Callback function is not programmed yet!'],...
+                '!! Warning !!')
+            % See Also: dialog, questdlg, errordlg
+        end
+    
+        function uimenu_save_callback(~,~)        
+            % Can be any variable stored in the interface or the workspace
+            uisave({'data'},'ListStudents.mat') %Suggested filename
+            %See Also: uigetfifle, uiopen
+        end
 
-    function uimenu_new_callback(~,~)
-        
-        warndlg(['No action will happen when Pressing OK because'...
-            ' this Callback function is not programmed yet!'],...
-            '!! Warning !!')
-        % See Also: dialog, questdlg, errordlg
+%-----------
+% FIT
+%-----------
+handles.uimenu_fit = uimenu(mainFig, ...
+        	                'Label','Fit');
+
+    handles.uimenu_model = uimenu(handles.uimenu_fit,...
+                                   'Label', 'Select Model');
+
+        handles.uimenu_fit1 = uimenu(handles.uimenu_model,...
+                                   'Label','Fit1',...
+                                   'Callback', @uimenu_fit1_callback);
+
+            function uimenu_fit1_callback(~,~)
+                handles.radiobutton_Fit1.Value = 1;
+            end
+
+        handles.uimenu_fit2 = uimenu(handles.uimenu_model,...
+                           'Label','Fit2',...
+                           'Callback', @uimenu_fit2_callback);
+
+            function uimenu_fit2_callback(~,~)
+                handles.radiobutton_Fit2.Value = 1;
+            end
+
+    handles.uimenu_dofit = uimenu(handles.uimenu_fit,...
+                               'Label','Perform Fit',...
+                               'Callback', @pushbutton_Fit_Callback);
+%-----------
+% PLOT
+%-----------
+handles.uimenu_plot = uimenu(mainFig, ...
+        	                'Label','Plot');
+    handles.uimenu_clr = uimenu(handles.uimenu_plot,...
+                                'Label', 'Clear axes',...
+                                'Callback', @pushbutton_ClearFitAxes_Callback);
+%-----------
+% HELP
+%-----------
+handles.uimenu_hp = uimenu(mainFig, ...
+        	                'Label','Help',...
+                            'Callback', @menu_help_Callback);
+
+    function menu_help_Callback(~,~)
+        d = dialog('Position',[300 300 250 150],'Name','My Dialog');
+
+        txt = uicontrol('Parent',d,...
+                   'Style','text',...
+                   'Position',[20 80 210 40],...
+                   'String','Click the close button when you''re done.');
+    
+        btn = uicontrol('Parent',d,...
+                   'Position',[85 20 70 25],...
+                   'String','Close',...
+                   'Callback','delete(gcf)');
     end
-
-    function uimenu_save_callback(~,~)        
-        % Can be any variable stored in the interface or the workspace
-        uisave({'data'},'ListStudents.mat') %Suggested filename
-        %See Also: uigetfifle, uiopen
-    end
+%-----------
+% ABOUT
+%-----------
+handles.uimenu_abt = uimenu(mainFig, ...
+        	                'Label','About');
 %----------                                                     ----------%
 
 %--------------------------------------------------------------------------
 % TOOLBAR
 %--------------------------------------------------------------------------
+%%%   !!!   TO DO   !!!   %%% 
 handles.toolbar=uitoolbar(mainFig);
 
 %-------------------
@@ -138,36 +216,35 @@ uipushtool(handles.toolbar, ...
 
     function pushbutton_add_Callback(~,~)
         
-        data = get(handles.uitable,'Userdata');                 % Get data from the Data Details table
-        FileList = get(handles.uitable,'RowName');  % Get entries in listbox_DataSets
+        data = get(handles.uitable,'Userdata');             % Get data from the Data Details table
+        FileList = get(handles.uitable,'RowName');          % The names of the files are stored in the RowName
         n=numel(FileList); 
-        files = uigetfile('*', ...
+        files = uigetfile('*', ...                          % GUI that allows to select multiple files
                            'Select one or more files', ...
-                           'MultiSelect','on');                 % GUI that allows to select multiple files
-        if ischar(files)                                        % If only one file is selected, "files" is a char vector
-            FileNames = strsplit(files, '.');                   % Gets file name without extension
-            FileNames = string(FileNames{1});                    
-        else                                                    % If multiple files are selected
+                           'MultiSelect','on');             
+        if ischar(files)                                    % If only one file is selected, "files" is a char vector
+            FileNames = strsplit(files, '.');               % Gets file name without extension
+            FileNames = string(FileNames{1});                 
+        else                                                % If multiple files are selected
             FileNames = [];
-            for k = 1:numel(files)                              
-                File = strsplit(files{k}, '.');
+            for k = 1:numel(files)                          % For each on    
+                File = strsplit(files{k}, '.');             % Gets file name without extension
                 File = string(File{1});
-                FileNames = [FileNames;File];
+                FileNames = [FileNames;File];               % Stack it to "FileNames" array
             end
         end
 
-        if isempty(data)                                % if there is no data yet in the list or all was deleted
-            set(handles.uitable,...
-                'RowName',   FileNames)
-        else 
-            FileList = [FileList;FileNames];              
-            set(handles.uitable, ...
+        if isempty(data)                                    % if there is no data yet in the list or all was deleted
+            set(handles.uitable,...                         % just paste "FileNames" in the "RowName"
+                'RowName',   FileNames)                     
+        else                                                % If there was already data
+            FileList = [FileList;FileNames];                % Stack the new FileNames to the pre-existing FileList  
+            set(handles.uitable, ...                        % and past it to the "RowName"
                 'RowName',FileList)                                                         
         end
 
-        data(size(data,1)+1,:) = cell(1,7);
-        set(handles.uitable, ...
-        'RowName',  FileList,...
+        data(size(data,1)+1,:) = cell(1,7);                 % Add an extra row to the "Userdata" and "Data" properties of the table
+        set(handles.uitable, ...                            % Update them
         'Data',     data, ...
         'Userdata', data);
     end
@@ -185,19 +262,20 @@ uipushtool(handles.toolbar, ...
     'ClickedCallback',  @pushbutton_delete_Callback)
     
    function pushbutton_delete_Callback(~,~)
-        
+       
+        %%%   !!!   TO DO   !!!   %%% 
         % As a precaution measure, everytime data is deleted, the user
         % should be questioned
         qst = 'Are you sure you need to delete this information?';
         button = questdlg(qst,'WARNING DELETE','Yes','No','No');
         % No is the default button selected
         if strcmp(button,'Yes')
-            DataList = get(handles.listbox_DataSets,'String');
-            val=get(handles.listbox_DataSets,'Value');
-            DataList(val) ='';
+            DataSets = get(handles.uitable,'Rowname')
+            val=get(handles.uitable,'Userdata')
+            select = cell2mat(val(:,1))
+
             set(handles.listbox_DataSets,'String',DataList,'Value',1)        
             % all information related to that instance needs to be erased
-            %set(handles.edit_date,'String','')
             set(handles.uitable,...
                 'Rowname',get(handles.listbox_DataSets,'String'))
             data = get(handles.uitable,'Userdata');%or get(handles.uitable,'Data');
@@ -222,45 +300,41 @@ uipushtool(handles.toolbar, ...
 %----------                                                     ----------%
 
 
-    % function listbox_DataSets_Callback(hObject, ~)
-    %     handles.pushbutton_delete.Enable ='on'; % Get entries in listbox_DataSets  
-    %     %DataSetsList = get(handles.listbox_DataSets,'String');
-    %     tmp = get(hObject, 'String');
-    %     val = get(hObject, 'Value');         
-    %     data = get(handles.uitable,'Userdata'); % Get data stored in the Data Details table as "Userdata"
-    %     Labels = data(:,3); % Labels for each data set 
-    % 
-    %     % Plot the selected data set
-    %     %cla(handles.axes_Time, 'reset') %reset plot
-    %     axes(handles.axes_Time); %Select "Time" axes
-    % 
-    %     InputData = load(strcat('.\',string(tmp(val,:)),'.m'));
-    %     Time = InputData(:, 1);
-    %     SR = InputData(:, 2);
-    % 
-    %     my_color = rand(1,3);
-    %     all_marks = {'o','+','*','x','s','d','^','v','>','<','p','h'};
-    % 
-    %     plot(Time, SR, ...
-    %         'LineStyle',    'none', ...
-    %         'Marker',       all_marks{mod(val,12)},...
-    %         'LineWidth',    2, ...
-    %         'Color',        my_color, ...
-    %         'MarkerSize',   6, ...
-    %         'DisplayName',  string(Labels(val)))
-    %     legend('Location',  'northeast')
-    %     legend('boxoff')
-    %     xlabel('Time (months)')
-    %     ylabel('SR (%)')
-    %     axis([0 inf 0 100])
-    %     title('Clinical Data')   
-    % end
+    function DataSelection_Callback(hObject, ~)
+        data = get(handles.uitable,'Userdata'); % Get data stored in the Data Details table as "Userdata"
+        Labels = data(:,3); % Labels for each data set 
+
+        % Plot the selected data set
+        %cla(handles.axes_Time, 'reset') %reset plot
+        axes(handles.axes_Time); %Select "Time" axes
+
+        InputData = load(strcat('.\',string(tmp(val,:)),'.m'));
+        Time = InputData(:, 1);
+        SR = InputData(:, 2);
+
+        my_color = rand(1,3);
+        all_marks = {'o','+','*','x','s','d','^','v','>','<','p','h'};
+
+        plot(Time, SR, ...
+            'LineStyle',    'none', ...
+            'Marker',       all_marks{mod(val,12)},...
+            'LineWidth',    2, ...
+            'Color',        my_color, ...
+            'MarkerSize',   6, ...
+            'DisplayName',  string(Labels(val)))
+        legend('Location',  'northeast')
+        legend('boxoff')
+        xlabel('Time (months)')
+        ylabel('SR (%)')
+        axis([0 inf 0 100])
+        title('Clinical Data')   
+    end
 %----------                                                     ----------%
 
 %--------------------------------------------------------------------------
 % "DATA DETAILS" PANEL
 %--------------------------------------------------------------------------
-handles.panel_DataDetails = uipanel('Parent',mainFig,...
+handles.panel_DataDetails = uipanel('Parent',mainFig,...   
     'Tag',              'panel_DataDetails',...
     'Title',            'Data Details',...
     'Units',            'Normalized',...
@@ -272,37 +346,37 @@ handles.panel_DataDetails = uipanel('Parent',mainFig,...
 %-----------------------------
 % "DATA DETAILS" UITABLE
 %-----------------------------
-handles.uitable = uitable(handles.panel_DataDetails,...          % the olduitable allows to ToolTip the header
+handles.uitable = uitable(handles.panel_DataDetails,...        
     'Tag',              'uitable',...
-    'Data',             TestData,...                                % Data displayed on the table
+    'Data',             TestData,...                    % Data displayed on the table
     'Units',            'normalized', ...
     'Position',         [0.01 0.05 .98 .95],...
     'ColumnEditable',   true,...
+    'ColumnWidth',      {70 70 70 70 70 70 70 70},...
     'ColumnFormat',     {'logical' 'char' 'char' 'numeric' 'numeric' 'numeric' 'numeric'},...                                     
-    'ColumnName',       {'Select' 'Author' 'Label' 'Nr.  Patients' 'D [Gy]' 'd [Gy/fx]' 'Td [days]'},...
+    'ColumnName',       {'Select' 'Author' 'Label' 'Nr. Patients' 'D [Gy]' 'd [Gy/fx]' 'T [days]'},...
+    'Tooltip',          {['<html>Select: data to fit<br />' ...
+                          'Author: of the study<br /> ' ...
+                          'Label: to be used in the plot<br />' ...
+                          'Nr. Patients: total number of patients in the study<br /> ' ...
+                          'D: total prescription dose in grey<br /> ' ...
+                          'd: dose administrated in each fraction in grey per fraction<br />' ...
+                          'T: total treatment time in days </html>']},...
     'RowName',          handles.FileNames,...
-    'Userdata',         TestData,...  % Data that can be accesible by the user
+    'Userdata',         TestData,...                    % Data that can be accesible by the user
     'CellEditCallback', @datauitable_Callback);
-    %'ColumnWidth',      85,... % integer number in pixel units  
-    %'ColumnToolTip',    {'Select data to perform the fit'...        % Tips when mouse hover
-                         % 'The author of the study'...
-                         % 'Label on the plot'...
-                         % 'Number of patients on the study'...
-                         % 'Total prescription dose'...
-                         % 'Dose per fraction'...
-                         % 'Treatment time'});
 
     function datauitable_Callback(hObject, event)
-        tmp = get(hObject, 'Data');                 % Get data from the table
-        indices = event.Indices();                  % Index the edited cell
-        input = cell2mat(tmp(indices(1), indices(2))); % Input kecp as a number
-        if indices(2)>4
-            if ~isnan(input)
-                set(hObject, 'Userdata', tmp);
-            else 
-                prevState = get(hObject, 'Userdata');
-                set(hObject, 'Data', prevState)
-                msgbox('Input should be a number')
+        tmp = get(hObject, 'Data');                     % Get data from the table
+        indices = event.Indices();                      % Index the edited cell
+        input = cell2mat(tmp(indices(1), indices(2)));  % Input kept as a number
+        if indices(2)>3                                 % If a cell in columns 4, 5, 6 or 7 is changed                            
+            if ~isnan(input)                            % If it's not NaN 
+                set(hObject, 'Userdata', tmp);          % Keeps Data in the table and updates Userdata 
+            else                                        % If input is NaN
+                prevState = get(hObject, 'Userdata');   % Gets previous state of the tabel stored in the Userdata
+                set(hObject, 'Data', prevState)         % Updates the data in the table back to the previous state, before editing
+                msgbox('Input should be a number')      % Propts what the input must be
             end
         end
     end
@@ -374,7 +448,14 @@ handles.radiobutton_Fit1 = uicontrol(handles.FitSelection,...
     'String',               'Fit1',......
     'Units',                'Normalized', ...
     'Position',             [.2 .3 .2 .5],...
-    'TooltipString',        '<html><center>Select Model 1:<center><br /> SR(d,D,&tau) = exp(-K exp(-[&alpha(1+d/(&alpha/&beta)) D - &gamma T - a(&tau - T))<sup>&delta</sup>])) </html>',...
+    'TooltipString',        ['<html><center>Select Model 1:<br />' ...
+                             'SR(d,D,&tau) = exp(-K exp(-[&alpha(1+d/(&alpha/&beta)) D - &gamma T - a(&tau - T))<sup>&delta</sup>]))<br />' ...
+                             ' </center> <br />' ...
+                             'SR: Survival Rate in percenatge (%) <br />' ...
+                             '&tau: enlapsed time from the beggining of the treatment (UNITS???) <br />' ...
+                             '&gamma = ln2/T<sub>d</sub>, &alpha and &beta characterize the intrinsic radiosensitivity of cells >br />' ...
+                             'T<sub>d</sub>: potential doubling time <br />' ...
+                             'K, a and &delta are the remaining fitting parameters. </html>'],...
     'FontSize',             10,...
     'HorizontalAlignment',  'right');
 
@@ -384,7 +465,18 @@ handles.radiobutton_Fit2 = uicontrol(handles.FitSelection,...
     'String',                   'Fit2',......
     'Units',                    'Normalized', ...
     'Position',                 [.8 .3 .2 .5],...
-    'TooltipString',            '<html>Select Model 2:<br /> SR(d,D,&tau) = 1 - (2&pi)<sup>-1/2</sup> &int<sub>-&infin</sub><sup>t</sup> exp(-x<sup>2</sup>/2) dx <br /> t = (exp(-[&alpha(1+d/(&alpha/&beta))D - &gamma T -(&gamma(&tau - T))<sup>&delta</sup>])-K<sub>50</sub>/K<sub>0</sub>)/(&sigma<sub>k</sub>/K<sub>0</sub>)</html>',...
+    'TooltipString',            ['<html><center>Select Model 2:<br /> ' ...
+                                 'SR(d,D,&tau) = 1 - (2&pi)<sup>-1/2</sup> &int<sub>-&infin</sub><sup>t</sup> exp(-x<sup>2</sup>/2) dx <br /> ' ...
+                                 't = (exp(-[&alpha(1+d/(&alpha/&beta))D - &gamma T -(&gamma(&tau - T))<sup>&delta</sup>])-K<sub>50</sub>/K<sub>0</sub>)/(&sigma<sub>k</sub>/K<sub>0</sub>) <br /> ' ...
+                                 '</center> <br />' ...
+                                 'SR: Survival Rate in percenatge (%) <br /> ' ...
+                                 '&tau: enlapsed time from the beggining of the treatment (UNITS???) <br /> ' ...
+                                 't = (K - K<sub>50</sub>)/&sigma<sub>k</sub> <br />' ...
+                                 'K<sub>50</sub> is the critical number of tumor clonogens corresponding to death in 50% patients <br />' ...
+                                 '&sigma<sub>k</sub> is the gaussian width for the distribution of critical clonogen numbers <br />' ...
+                                 'Dependence of tumor cells on D, d, T and &tau is given by the following LQ inspired model: <br />' ...
+                                 'K = K<sub>50</sub> exp(-[&alpha(1+d/(&alpha/&beta))D - &gamma T -(&gamma(&tau - T))<sup>&delta</sup>]) <br />' ...
+                                 '(&gamma(&tau - T))<sup>&delta</sup> characterizes the time dependence of tumor regrowth after completions of RT. </html>'],...
     'FontSize',                 10,...
     'HorizontalAlignment',      'left');
     
@@ -400,7 +492,6 @@ handles.radiobutton_Fit2 = uicontrol(handles.FitSelection,...
             set(handles.fiteduitable1,      'Visible', 'off');
             set(handles.fiteduitable2,      'Visible', 'on');
             set(handles.fit2optionsuitable, 'Visible', 'on');
-        Equations; 
         end
     end
 
@@ -416,6 +507,7 @@ handles.fit1optionsuitable = uitable(panel_Fit,...
     'Position',         [0.01 .25 .99 .745],...
     'Visible',          'on',...
     'ColumnEditable',   true,...
+    'ColumnWidth',      {65 65 65 65 65 65 65 65},...
     'ColumnName',       {'K' '<html><center />&alpha<br /> [Gy<sup>-1</sup>]</html>' ...
                          '<html><center />&beta<br />[Gy<sup>-2</sup>]</html>' '<html>&gamma</html>' ...
                          '<html><center />a <br />[mo<sup>-1</sup>]</html>' '<html>&delta</html>'},...
@@ -431,6 +523,7 @@ handles.fit2optionsuitable = uitable(panel_Fit,...
     'Position',         [0.01 .25 .99 .745],...
     'Visible',          'off',...
     'ColumnEditable',   true,...
+    'ColumnWidth',      {65 65 65 65 65 65 65 65},...
     'ColumnName',       {'<html>K<sub>50</sub><span>&#47;</span>K<sub>0</sub></html>'...
                          '<html><center />&alpha<br /> [Gy<sup>-1</sup>]</html>' ...
                          '<html><center />&beta<br />[Gy<sup>-2</sup>]</html>'...
@@ -444,18 +537,19 @@ handles.fit2optionsuitable = uitable(panel_Fit,...
 
     function fitoptionsuitable_Callback(hObject,event)
         
-        tmp = get(hObject,'Data');        % keep the data from the table somwhere
+        tmp = get(hObject,'Data');                       % keep the data from the table somwhere
         input = cell2mat(...
-                tmp(event.Indices(1),event.Indices(2))) % The input given by the user is kept as a double
-        if ~isnan(input)                                % If the input is other than numeric, it will be passed as
-            set(hObject, ...                            % a NaN double; If the input is not a NaN is kept in the table and stored in the Userdata
-                'Userdata',tmp);
-        else                                            % Otherwise, if the input is NaN
-            prevState = get(hObject, 'Userdata');       % Gets the previous state of the table, stored in the Userdata
+                tmp(event.Indices(1),event.Indices(2))); % The input given by the user is kept as a double
+        if ~isnan(input)                                 % If the input is other than numeric, it will be passed as
+            set(hObject, ...                             % a NaN double;
+                'Userdata',tmp);                         % If the input is not a NaN, then it's kept on the table and stored in the Userdata
+        else                                             % Otherwise, if the input is NaN
+            prevState = get(hObject, 'Userdata');        % Gets the previous state of the table, stored in the Userdata
             set(hObject, ...
-                'Data', prevState);                     % Updates the data in the table back to the previous state, before editing
-
-            errordlg('Input must be a number! Use point decimal separator (e.g. 3.14 instead of 3,14). Cientific notation is valid (e.g. 365 = 3.65e2).', 'Input Error')            % Propts what the input must be
+                'Data', prevState);                      % Updates the data in the table back to the previous state, before editing
+            errordlg(['Input must be a number!' ...      % Propts what the input must be
+                      'Use point decimal separator (e.g. 3.14 instead of 3,14).' ...
+                      ' Cientific notation is valid (e.g. 365 = 3.65e2).'], 'Input Error')            
         end
      end
 
@@ -482,32 +576,31 @@ handles.pushbutton_fit = uicontrol(panel_Fit,...
     'Callback',         @pushbutton_Fit_Callback);
 
     function pushbutton_Fit_Callback(~,~)
-
-        data = get(handles.uitable,'Userdata');
-        state1 = get(handles.fit1optionsuitable, 'Visible');
-        state2 = get(handles.fit2optionsuitable, 'Visible');
+        data = get(handles.uitable,'Userdata');              % Gets "Userdata" from Data Details table
+        state1 = get(handles.fit1optionsuitable, 'Visible'); % State of button Fit1 (On or Off)
+        state2 = get(handles.fit2optionsuitable, 'Visible'); % State of button Fit2 (On or Off)
         DataFiles = strings(0);
         DataSetsList = get(handles.uitable,'RowName');
        
-        if isempty(data)
-            disp('No data to show')
-        else 
-            cla(handles.axes_Time, 'reset') %clear axes
+        if isempty(data)                                     % If the table is empty
+            disp('No data to show')                          % Nothing to display
+        else                                                 % If the table contains data
+            cla(handles.axes_Time, 'reset')                  % clear both axes
             cla(handles.axes_BED, 'reset')
-            axes(handles.axes_Time)
-            enableDefaultInteractivity(handles.axes_Time)
+            axes(handles.axes_Time)                          % Select axes_Time
+            enableDefaultInteractivity(handles.axes_Time)    % Enable its interactivity
 
-            Selected = data(:,1);
-            for i = 1:numel(Selected)
-                if isequal(Selected(i),{1})
-                    DataFiles = [DataFiles  strcat(".\",string(DataSetsList(i,:)),".m")];
+            Selected = data(:,1);                                                           % Selection state of the data
+            for i = 1:numel(Selected)                       
+                if isequal(Selected(i),{1})                                                 % If it's selected
+                    DataFiles = [DataFiles  strcat(".\",string(DataSetsList(i,:)),".m")];   % Complete the file names with the extension
                     file_names = cellstr(DataFiles);
                 end
             end
-        if strcmp(state1, 'on')
-            Bounds = get(handles.fit1optionsuitable, 'Userdata');
-            [K, alpha, beta, gamma, a, Td, delta] = fit1(file_names, data, Bounds);
-            FitData = {round(str2double(K),5)...
+        if strcmp(state1, 'on')                                                     % If Fit1 model it's selected
+            Bounds = get(handles.fit1optionsuitable, 'Userdata');                   % Check initial guess, upper and lower bounds to perform the fit
+            [K, alpha, beta, gamma, a, Td, delta] = fit1(file_names, data, Bounds); % Performs Fit1
+            FitData = {round(str2double(K),5)...                                    % Stores fited parameters
                        round(str2double(alpha),5)...
                        round(str2double(beta),5)...
                        round(str2double(alpha)/str2double(beta),3)...
@@ -515,18 +608,18 @@ handles.pushbutton_fit = uicontrol(panel_Fit,...
                        round(str2double(a),5)...
                        round(str2double(Td),0)...
                        round(str2double(delta),5)};
-            set(handles.fiteduitable1,...
-                'Data', FitData,...
+            set(handles.fiteduitable1,...                   % Keep fited parameters information
+                'Data', FitData,...                         % and displays it on the table
                 'Userdata', FitData)
-            axes(handles.axes_BED);
-            enableDefaultInteractivity(handles.axes_BED)
-
-            BED(data);
+            axes(handles.axes_BED);                         % Now selects axes_BED
+            enableDefaultInteractivity(handles.axes_BED)    % enables its interactivity
+            BED(data);                                      % Performs BED calculation
             %msgbox('Complete!')
-        elseif strcmp(state2, 'on')
-            Bounds = get(handles.fit2optionsuitable, 'Userdata');
-            [K50_K0, alpha, beta, gamma, Td, sigmak_k0, delta] = fit2(file_names, data, Bounds);
-            FitData = {RoundStr2Double(K50_K0,3)...
+
+        elseif strcmp(state2, 'on')                                                              % If Fit2 model is selected
+            Bounds = get(handles.fit2optionsuitable, 'Userdata');                                % Check initial guess, upper and lower bounds to perform the fit
+            [K50_K0, alpha, beta, gamma, Td, sigmak_k0, delta] = fit2(file_names, data, Bounds); % Performs Fit2
+            FitData = {RoundStr2Double(K50_K0,3)...                                              % Stores fited parameters
                        RoundStr2Double(alpha,5)...
                        RoundStr2Double(beta,3)...
                        round(str2double(alpha)/str2double(beta),5)...
@@ -534,11 +627,12 @@ handles.pushbutton_fit = uicontrol(panel_Fit,...
                        RoundStr2Double(Td,0)...
                        RoundStr2Double(sigmak_k0,5)...
                        RoundStr2Double(delta,5)};
-            set(handles.fiteduitable2,...
-                'Data', FitData,...
+            set(handles.fiteduitable2,...                   % Keeps fited parameters information                           
+                'Data', FitData,...                         % and displays it on the table
                 'Userdata', FitData)
-            axes(handles.axes_BED);
-            BED(data);
+            axes(handles.axes_BED);                         % Selects axes_BED
+            enableDefaultInteractivity(handles.axes_BED)    % enables its interactivity
+            BED(data);                                      % Performs BED calculation
             %msgbox('Complete!')
         end
         end
@@ -560,23 +654,23 @@ handles.pushbutton_ClearFitAxes = uicontrol(panel_Fit,...
 
 function pushbutton_ClearFitAxes_Callback(~,~)
 
-    cla(handles.axes_Time, 'reset') %reset plot
-    axes(handles.axes_Time);
-    xlabel('Time (months)')
+    cla(handles.axes_Time, 'reset')                 % Clear axes_Time
+    axes(handles.axes_Time);                        % Selects it again
+    xlabel('Time (months)')                         % Set labels
     ylabel('SR (%)')
-    axis([0 inf 0 100])
-    title(' ') 
+    axis([0 inf 0 100])                             % Axis limits [x_min x_max y_min y_max] inf means it fits to the content
+    title(' ')                                      % No title when cleared
     hold on;
-    enableDefaultInteractivity(handles.axes_Time) % intereactive axes
+    enableDefaultInteractivity(handles.axes_Time)   % Enables intereactivity+
 
-    cla(handles.axes_BED, 'reset') %reset plot
+    cla(handles.axes_BED, 'reset')                  % Clear axes_BED
     axes(handles.axes_BED);
     xlabel('BED (Gy)')
     ylabel('SR (%)')
     axis([0 inf 0 100])
     title(' ') 
     hold on;
-    enableDefaultInteractivity(handles.axes_BED) % intereactive axes
+    enableDefaultInteractivity(handles.axes_BED) 
 
 end
 %----------                                                     ----------%
@@ -604,6 +698,7 @@ handles.fiteduitable1 = uitable(handles.panel_Fited,...
     'Position',         [0.01 .1 .99 .9],...
     'Visible',          'on',...
     'ColumnEditable',   false,...
+    'ColumnWidth',      {65 65 65 65 65 65 65 65},...
     'ColumnName',       {'K' ...
                          '<html><center />&alpha <br /> [Gy<sup>-1</sup>]</html>' ...
                          '<html><center />&beta <br /> [Gy<sup>-2</sup>]</html>' ...
@@ -612,7 +707,7 @@ handles.fiteduitable1 = uitable(handles.panel_Fited,...
                          '<html><center>T<sub>d</sub><br />[day]</html>' ...
                          '<html><center />a <br /> [mo<sup>-1</sup>]</html>' ...
                          '<html>&delta</html>'},...
-    'RowName',           {'Results' 'More'},...
+    'RowName',           {'Results' 'Lower uncty.' 'Upper uncty.'},...
     'Userdata',          FitData,...
     'CellEditCallback',  @fiteduitable_Callback);
 

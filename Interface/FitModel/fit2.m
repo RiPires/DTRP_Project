@@ -80,7 +80,6 @@ disp(['delta: ', delta]);
 
 
 % Plotting
-
 labels = cell2mat(DataDetails(:,3));
 
 hold on
