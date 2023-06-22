@@ -24,12 +24,12 @@ for i = 1:length(x_values)
     x_values (i) = bed(d_values(i),v(2),v(3),D_values(i),v(4),T_day_values(i));
 end  
 
-disp('BED values:'); 
-disp(['Liang: ', num2str(x_values(1))]);
-disp(['Dawson: ', num2str(x_values(2))]);
-disp(['SeongH: ', num2str(x_values(3))]);
-disp(['SeongM: ', num2str(x_values(4))]);
-disp(['SeongL: ', num2str(x_values(5))]);
+% disp('BED values:'); 
+% disp(['Liang: ', num2str(x_values(1))]);
+% disp(['Dawson: ', num2str(x_values(2))]);
+% disp(['SeongH: ', num2str(x_values(3))]);
+% disp(['SeongM: ', num2str(x_values(4))]);
+% disp(['SeongL: ', num2str(x_values(5))]);
 
 
 % Plotting
