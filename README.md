@@ -9,7 +9,7 @@ class of 2022/2023.
 
 # Authors: 
               R. Matoza Pires - fc49807@alunos.fc.ul.pt
-              A. Pardal
+              A. Pardal - fc51387@alunos.fc.ul.ot
               R. Santos
 
 # Supervisor:
