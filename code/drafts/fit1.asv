@@ -35,7 +35,7 @@ for i = 1:length(file_names)
     s = size(file);
     n_points = n_points + s(1);
 end
-
+disp(n_points);
 %v - vector with parameters to find   
     %v(1) - K 
     %v(2) - alpha Gy^-1
@@ -71,12 +71,12 @@ f = @(x,v,d,D,T_day,T_month) real(100*exp(-v(1).*exp(-(v(2).*(1+(d./(v(2)./v(3))
     %v_min(6) - delta 
 
 % Root-mean-square deviation function
-rmsd = rmsd_residuals(file_names, N_values, d_values, D_values, T_day_values, T_month_values, v_min, f);
+rmsd_val = rmsd_residuals(file_names, N_values, d_values, D_values, T_day_values, T_month_values, v_min, fitting_function);
 % Goodness of the fit
 % dof = no of degrees of freedom = 
 % = no. of clinically observed survival data points- no. of free parameters in the fitting function
 dof = n_points-n_param;
-goodfit = rmsd/dof;
+goodfit = rmsdval/dof;
 
 % CIs (confidence intervals) calculation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -99,6 +99,7 @@ for i = 1:n
         % where we have beta instead of alpha/beta and gamma instead of Td
         % v_min_boot: parameters of the fitting function for that replica
         % fval_boot: value of the chi-square function
+        % rmsdval_boot: value of the Root-mean-square deviation 
 
     [v_min_boot_old,v_min_boot,fval_boot] = perform_fit(generated_files,N_values,d_values,D_values,T_day_values,T_month_values,v0,lb,ub,f,'bootstrapping');
    
@@ -132,12 +133,6 @@ for p = 1:n_param
     histogram(fit_replicates(:,p));
     xlabel(parameters_names{p});
 end
-
-%saving the plot
-saveas(gcf, './results/histograms_boot1.pdf')
-
-% Clear the figure
-clf
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Save the results in a file
@@ -178,7 +173,7 @@ for i = 1:number_studies
     y = data(:,2);
     %original points
     plot(x, y, markers{i}, 'LineWidth', 2, 'Color', colors{i},'MarkerSize', 6, 'DisplayName', studies_names{i})
-    errorbar(x,y,errlow,errhigh,'Color',colors{i},'LineStyle','none','HandleVisibility', 'off');
+    errorbar(x,y,errlow,errhigh,'Color',colors{i},'LineStyle','none');
     %fitted function   
     plot(x_points, f(x_points,v_min_old,d_values(i),D_values(i),T_day_values(i),T_month_values(i)), '--', 'LineWidth', 2, 'Color', colors{i},'HandleVisibility', 'off')
 end
@@ -299,7 +294,7 @@ function s = sample(data_file)
 end
 
 % Returns the confidence interval of a fitting parameter with replicas 
-% obtained from Bootstrapping
+% obtained from Boostrapping
 function ci = ci_boot(param_rep)
     % param_rep -> replicates for the parameter in question
     % Calculating the 95% confidence interval by excluding

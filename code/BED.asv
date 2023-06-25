@@ -15,7 +15,6 @@ error_bars_bot = {'datafiles/error bars/errorsbars_bot_1y.csv',...
     'datafiles/error bars/errorsbars_bot_4y.csv'};
 number_studies = numel(file_names);
 number_years = 4;
-
 % Data from the files:
 %sr (SR) - survival rate in percentage
 %tau - elapsed time in months
@@ -58,6 +57,9 @@ months_values = [12,24,36,48];
 
 % for each year, m:
 for m = 1:length(months_values)
+    %this is a print!
+    disp('year:');
+    disp(m);
     month = months_values(m);
     % error bars for that year
     errhigh = load(error_bars_top{m});
@@ -70,21 +72,35 @@ for m = 1:length(months_values)
     % for each study, s:
     for s = 1:number_studies %s - index to scroll through the values
         study = sortedStudies(s); % study - index to scroll through the studies
+        %this is a print!
+        disp('study:');
+        disp(study);
         data = load(file_names{study});
         tau = data(:,1); % tau (months)
         sr = data(:,2); % survival rate (%)
 
-        err = s - dif_index; % err - index to scroll through the error bars
+        err = number_studies - dif_index; % err - index to scroll through the error bars
 
         t = 1; %index to scroll through tau
         % we start by assuming there is not a tau that corresponds 
         % to the year in question, m
         found_tau = false;
-        while t <= length(tau) && found_tau == false
+        while t <= length(tau)|| found_tau == false
             if abs(month-tau(t))<2 
                 found_tau = true; %there is a tau that corresponds to the year in question
                 sr_val = sr(t); %respective SR (%)
-                bed_val = sortedValues(s); %respective BED (Gy)
+                bed_val = sortedValues(study); %respective BED (Gy)
+                %this is a print!
+                disp('tau:');
+                disp(tau(t));
+                disp('sr val:');
+                disp(sr_val);
+                disp('bed val:');
+                disp(bed_val);
+                disp('err');
+                disp(err);
+                disp('diff_index');
+                disp(dif_index);
                 pointsyear{m} = vertcat(pointsyear{m}, [bed_val,sr_val,errhigh(err),errlow(err)]);
             end
         t = t + 1;
@@ -115,7 +131,7 @@ end
 % Plotting
 tau_values = {365,730,1095,1460};
 colors = {'#FE0100','#0000F7','#FD04FC','#000000'};
-years_label = {'\tau = 1y', '\tau = 2y', '\tau = 3y', '\tau = 4y'};
+years_label = {'$tau = 1y$','$tau = 2y$','$tau = 3y$','$tau = 4y$'};
 markers = {'s','v','v','o'};
 
 hold on
@@ -152,7 +168,7 @@ end
 
 
 %legend,lables and title
-legend('Location', 'northwest')
+legend('Location', 'northeast')
 legend('boxoff')
 
 xlabel('Biologically Effective Dose (Gy)', 'Interpreter', 'latex');

@@ -4,6 +4,17 @@ clc, clearvars %clear
 %Liang,Dawson,SeongH,SeongM,SeongL
 file_names = { 'datafiles/SR_EQ1_L.csv','datafiles/SR_EQ1_D.csv',...
     'datafiles/SR_EQ1_SH.csv','datafiles/SR_EQ1_SM.csv','datafiles/SR_EQ1_SL.csv'};
+%Error Bars of the files points
+error_bars_top = {'datafiles/error bars/errorsbars_top_Liang.csv',...
+    'datafiles/error bars/errorsbars_top_Dawson.csv',...
+    'datafiles/error bars/errorsbars_top_SeongH.csv',...
+    'datafiles/error bars/errorsbars_top_SeongM.csv',...
+    'datafiles/error bars/errorsbars_top_SeongL.csv'};
+error_bars_bot = {'datafiles/error bars/errorsbars_bot_Liang.csv',...
+    'datafiles/error bars/errorsbars_bot_Dawson.csv',...
+    'datafiles/error bars/errorsbars_bot_SeongH.csv',...
+    'datafiles/error bars/errorsbars_bot_SeongM.csv',...
+    'datafiles/error bars/errorsbars_bot_SeongL.csv'};
 number_studies = numel(file_names);
 % Data from the files:
 %x (tau) - elapsed time in months
@@ -59,16 +70,21 @@ f = @(x,v,d,D,T_day) fitting(x,v,d,D,T_day,'fitting');
     %v_min(5) - a months^-1
     %v_min(6) - delta 
 
+% Root-mean-square deviation function
+rmsd = rmsd_residuals(file_names, N_values, d_values, D_values, T_day_values, v_min, f);
 % Goodness of the fit
-% dof - degrees of freedom
+% dof = no of degrees of freedom = 
+% = no. of clinically observed survival data points- no. of free parameters in the fitting function
 dof = n_points-n_param;
-goodfit = fval/dof;
+goodfit = rmsd/dof;
 
 % CIs (confidence intervals) calculation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Bootstraping 
+
 fit_replicates = []; % array to store the replicas of the fitting parameters
 n = 1000; % number of replicates -> we will get 1000 new values for the fitting parameters
+
 for i = 1:n 
     % cell array to store the samples for each replicate
     generated_files = cell(1, number_studies);
@@ -107,23 +123,23 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Profile-Likelihood
-
-
-% Uncertainties given by the Profile-Likelihood
-% u_boot_plus = zeros(n_param); % array to store the upper uncertainty of the fitting parameters
-% u_boot_minus = zeros(n_param); % array to store the lower uncertainty of the fitting parameters
-% for i = 1:n_param
-%     CI = ci_boot(fit_replicates(:,i),v_min(i)); % confidence interval
-%     [u_plus,u_minus] = uncertainties(v_min(i),CI);
-%     u_boot_plus(i) = u_plus;
-%     u_boot_minus(i) = u_minus;
-% end
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+% Plotting the histograms of the replicas of the parameters to see if they
+% follow a normal distribution
 parameters_names = {'K50/K0','alpha','alpha/beta','Td','sigmak/K0','delta'};
+
+figure;
+for p = 1:n_param
+    subplot(2,3,p);
+    histogram(fit_replicates(:,p));
+    xlabel(parameters_names{p});
+end
+
+%saving the plot
+saveas(gcf, './results/histograms_boot2.pdf')
+
+% Clear the figure
+clf
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Save the results in a file
 myfile = fopen('./results/fit2.txt', 'w');  
@@ -137,131 +153,43 @@ formatSpec = '%s: %.6f [-%.6f + %.6f]\n CI: [%.6f,%.6f]\n';
 for i = 1:length(parameters_names)
     fprintf(myfile, formatSpec, parameters_names{i}, v_min(i), u_boot_minus(i), u_boot_plus(i),CI_l(i),CI_u(i));
 end
-fprintf(myfile, '\n');
-fprintf(myfile, 'Uncertainties given by the Profile-Likelihood Method:\n');
-fprintf(myfile, '-----------------\n');
-fprintf(myfile, 'Parameters values that minimize the sum of squares: value [- uncertainty + uncertainty]:\n');
-
 
 % Close the file
 fclose(myfile);
 
 
 % Plotting
+colors = {'#FD04FC','#0000F7','#000000','#FD6C6D','#46FD4B'};
+studies_names = {'Liang','Dawson','SeongH','SeongM','SeongL'};
+markers = {'v','o','^','s','o'};
+
 hold on
 x_points = linspace(1, 70, 71);
 
-% Liang
-data = load(file_names{1});
-
-y_plot = [];
-x_plot = [];
-x = data(:, 1);
-y = data(:, 2);
-%original points
-plot(x, y, 'v', 'LineWidth', 2, 'Color', '#FD04FC','MarkerSize', 6, 'DisplayName', 'Liang')
-%fitted function  
-for i = 1:length(x_points)
-    sr = fitting(x_points(i),v_min_old,d_values(1),D_values(1),T_day_values(1),'plotting');
-    if ~isnan(sr)
-        tau = x_points(i);
-        y_plot = [y_plot, sr];
-        x_plot = [x_plot, tau];
-   end
+for i = 1:number_studies
+    data = load(file_names{i});
+    errhigh = load(error_bars_top{i});
+    errlow = load(error_bars_bot{i});
+    y_plot = [];
+    x_plot = [];
+    x = data(:,1);
+    y = data(:,2);
+    %original points
+    plot(x, y, markers{i}, 'LineWidth', 2, 'Color', colors{i},'MarkerSize', 6, 'DisplayName', studies_names{i})
+    errorbar(x,y,errlow,errhigh,'Color',colors{i},'LineStyle','none','HandleVisibility', 'off');
+    %fitted function   
+    for xi = 1:length(x_points)
+        sr = fitting(x_points(xi),v_min_old,d_values(i),D_values(i),T_day_values(i),'plotting');
+        if ~isnan(sr)
+            tau = x_points(xi);
+            y_plot = [y_plot, sr];
+            x_plot = [x_plot, tau];
+        end
+    end
+    plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', colors{i},'HandleVisibility', 'off')
+    hold on;
 end
 
-plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#FD04FC','HandleVisibility', 'off')
-hold on;
-
-
-% Dawson
-data = load(file_names{2});
-
-y_plot = [];
-x_plot = [];
-x = data(:, 1);
-y = data(:, 2);
-%original points
-plot(x, y, 'o', 'LineWidth', 2, 'Color', '#0000F7','MarkerSize', 6, 'DisplayName', 'Dawson');
-%fitted function  
-for i = 1:length(x_points)
-    sr = fitting(x_points(i),v_min_old,d_values(2),D_values(2),T_day_values(2),'plotting');
-    if ~isnan(sr)
-        tau = x_points(i);
-        y_plot = [y_plot, sr];
-        x_plot = [x_plot, tau];
-   end
-end
-
-plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#0000F7','HandleVisibility', 'off');
-hold on;
-
- 
-% SeongH
-data = load(file_names{3});
-
-y_plot = [];
-x_plot = [];
-x = data(:, 1);
-y = data(:, 2);
-%original points
-plot(x, y, '^', 'LineWidth', 2, 'Color', '#000000','MarkerSize', 6, 'DisplayName', 'SeongH');
-%fitted function  
-for i = 1:length(x_points)
-    sr = fitting(x_points(i),v_min_old,d_values(3),D_values(3),T_day_values(3),'plotting');
-    if ~isnan(sr)
-        tau = x_points(i);
-        y_plot = [y_plot, sr];
-        x_plot = [x_plot, tau];
-   end
-end
-
-plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#000000','HandleVisibility', 'off');
-hold on;
-
-% SeongM
-data = load(file_names{4});
-
-y_plot = [];
-x_plot = [];
-x = data(:, 1);
-y = data(:, 2);
-%original points
-plot(x, y, 's', 'LineWidth', 2, 'Color', '#FD6C6D','MarkerSize', 6, 'DisplayName', 'SeongM');
-%fitted function  
-for i = 1:length(x_points)
-    sr = fitting(x_points(i),v_min_old,d_values(4),D_values(4),T_day_values(4),'plotting');
-    if ~isnan(sr)
-        tau = x_points(i);
-        y_plot = [y_plot, sr];
-        x_plot = [x_plot, tau];
-   end
-end
-
-plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#FD6C6D','HandleVisibility', 'off');
-hold on;
-
-% SeongL
-data = load(file_names{5});
-
-y_plot = [];
-x_plot = [];
-x = data(:, 1);
-y = data(:, 2);
-%original points
-plot(x, y, 'o', 'LineWidth', 2, 'Color', '#46FD4B','MarkerSize', 6, 'DisplayName', 'SeongL');
-%fitted function  
-for i = 1:length(x_points)
-    sr = fitting(x_points(i),v_min_old,d_values(5),D_values(5),T_day_values(5),'plotting');
-    if ~isnan(sr)
-        tau = x_points(i);
-        y_plot = [y_plot, sr];
-        x_plot = [x_plot, tau];
-   end
-end
-
-plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', '#46FD4B','HandleVisibility', 'off');
-hold on;
 
 %legend,lables and title
 legend('Location', 'northeast')
@@ -281,7 +209,7 @@ saveas(gcf, './results/fit2.pdf')
 function [param,new_param,chi2_val] = perform_fit(files,N,d,D,T_day,initial_guess,lower_bound,upper_bound,fitting_function,purpose)
     % Vector with fitting parameters -> v
     % Chi-square function
-    chi2 = @(v) residuals(files, N, d, D, T_day, v, fitting_function,purpose);
+    chi2 = @(v) chi2_residuals(files, N, d, D, T_day, v, fitting_function,purpose);
     % Set up the algorithm options
     options = optimoptions('fmincon','MaxIterations',1000,'TolFun',1e-9,'TolX',1e-9);
     % Run the algorithm
@@ -332,7 +260,8 @@ function result = fitting(tau,v,d,D,T_day,purpose)
         
 
 % Calculates the residuals of the points of all datafiles
-function r = residuals(files, N_list, d_list, D_list, T_day_list, v, f,purpose)
+% to obtain the Chi-square function
+function r = chi2_residuals(files, N_list, d_list, D_list, T_day_list, v, f,purpose)
     s = 0; %sum for all the points of all the files
     for i = 1:length(files)
         if strcmp(purpose, 'fitting')
@@ -359,6 +288,30 @@ function r = residuals(files, N_list, d_list, D_list, T_day_list, v, f,purpose)
     r = s;
 end
 
+% Calculates the residuals of the points of all datafiles
+% to obtain the Root-mean-square deviation function
+function r = rmsd_residuals(files, N_list, d_list, D_list, T_day_list, v, f)
+    s = 0; %sum for all the points of all the files
+    for i = 1:length(files)
+        data = load(files{i});
+        x = data(:, 1); %x (tau) - elapsed time in months
+        y = data(:, 2); %y (SR) - survival rate in percentage
+        N = N_list(i);
+        d = d_list(i);
+        D = D_list(i);
+        T_day = T_day_list(i);
+        sf = 0; %sum for the points of a specific file
+
+        for j = 1:length(x)
+            y_fit = f(x(j),v,d,D,T_day);
+            res = (y_fit - y(j)).^2 / N;
+            sf = res + sf;
+        end
+        s = sf + s;
+    end
+    r = sqrt(s);
+end
+
 
 % Generates a sample for a given datafile (for bootstraping)
 function s = sample(data_file)
@@ -379,7 +332,7 @@ function s = sample(data_file)
 end
 
 % Returns the confidence interval of a fitting parameter with replicas 
-% obtained from Boostrapping
+% obtained from Bootstrapping
 function ci = ci_boot(param_rep)
     % param_rep -> replicates for the parameter in question
     % Calculating the 95% confidence interval by excluding
