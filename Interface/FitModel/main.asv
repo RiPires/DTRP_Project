@@ -31,7 +31,7 @@ function main
 % A. Pardal
 % R. Santos
 % 
-% Last Update: 20/06/2023
+% Last Update: 23/06/2023
 % 
 % adapted from bcf's teraPro function made in 09-01-2023
 % -------------------------------------------------------------------------
@@ -110,25 +110,22 @@ handles.uimenu_file = uimenu(mainFig, ...   % Menu "File"
         	                'Label','File');
 
     handles.uimenu_newFile = uimenu(handles.uimenu_file,...
-                                   'Label','New File...',...
-                                   'Callback',@uimenu_new_callback);
+                                   'Label','Add Files...',...
+                                   'Callback',@AddFile_CB);
+
+    handles.uimenu_delFile = uimenu(handles.uimenu_file,...
+                                   'Label','Delete Files...',...
+                                   'Callback',@Del_CB);
     
     handles.uimenu_saveFile = uimenu(handles.uimenu_file,...
                                     'Label','Save...',...
                                     'Separator','on',...
                                     'Callback',@uimenu_save_callback);
     
-        function uimenu_new_callback(~,~)
-            
-            warndlg(['No action will happen when Pressing OK because'...
-                ' this Callback function is not programmed yet!'],...
-                '!! Warning !!')
-            % See Also: dialog, questdlg, errordlg
-        end
     
         function uimenu_save_callback(~,~)        
             % Can be any variable stored in the interface or the workspace
-            uisave({'data'},'ListStudents.mat') %Suggested filename
+            uisave(get(handles.uitable,'Data'),'ListStudents.mat') %Suggested filename
             %See Also: uigetfifle, uiopen
         end
 
@@ -168,6 +165,10 @@ handles.uimenu_plot = uimenu(mainFig, ...
     handles.uimenu_clr = uimenu(handles.uimenu_plot,...
                                 'Label', 'Clear axes',...
                                 'Callback', @pushbutton_ClearFitAxes_Callback);
+    
+    handles.uimenu_pltdata = uimenu(handles.uimenu_plot,...
+                            'Label', 'Plot selected clinical data',...
+                            'Callback', @PltData);
 %-----------
 % HELP
 %-----------
@@ -179,9 +180,9 @@ handles.uimenu_hp = uimenu(mainFig, ...
 %-----------
 handles.uimenu_abt = uimenu(mainFig, ...
         	                'Label','About',...
-                            'Callback', @menu_abt_Callback);
+                            'Callback', @Abt_CB);
 
-    function menu_abt_Callback(~,~)
+    function Abt_CB(~,~)
         system(['notepad' ' ../../README.md' ' &']); % works on windows
     end
 %----------                                                     ----------%
@@ -202,14 +203,14 @@ uipushtool(handles.toolbar, ...
     'CData',             myIcon,...
     'Tag',              'pushtool_addfile',...
     'Enable',           'on',...
-    'ClickedCallback',  @pushbutton_add_Callback)
+    'ClickedCallback',  @AddFile_CB)
 
-    function pushbutton_add_Callback(~,~)       
+    function AddFile_CB(~,~)       
         data = get(handles.uitable,'Userdata');             % Get data from the Data Details table
         FileList = get(handles.uitable,'RowName');          % The names of the files are stored in the RowName
         n=numel(FileList); 
         files = uigetfile('*', ...                          % GUI that allows to select multiple files
-                           'Select one or more files', ...
+                           'Select one or more files to import', ...
                            'MultiSelect','on');             
         if ischar(files)                                    % If only one file is selected, "files" is a char vector
             FileNames = strsplit(files, '.');               % gets file name without extension
@@ -248,18 +249,18 @@ uipushtool(handles.toolbar, ...
     'CData',            myIcon,...
     'Tag',              'pushtool_delfile',...
     'Enable',           'on',...
-    'ClickedCallback',  @pushbutton_delete_Callback)
+    'ClickedCallback',  @Del_CB)
     
-   function pushbutton_delete_Callback(~,~)
+   function Del_CB(~,~)
        
-        qst = 'Are you sure you need to delete this information?'; % As a precaution measure, everytime data is deleted, the user should be questioned
+        qst = 'Are you sure you want to delete the unselected data?'; % As a precaution measure, everytime data is deleted, the user should be questioned
         button = questdlg(qst,'WARNING DELETE','Yes','No','No');   % No is the default button selected
         
         if strcmp(button,'Yes')
 
-            FileNames = get(handles.uitable, 'Rowname'); % Gets file name in the row header
+            FileNames = get(handles.uitable, 'Rowname'); % Gets file names in the row header
             data = get(handles.uitable,'Userdata');      % Gets Userdata in the table
-            select = cell2mat(data(:,1));                 % Gets selection status of the data
+            select = cell2mat(data(:,1));                % Gets selection status of the data
             n = numel(data(:,1));
             for k=n:-1:1                                 % Starting from the end of the table, otherwise we'll have problems with the indexing
                 if select(k) == 0                        % If the selection state is OFF             
@@ -289,7 +290,7 @@ uipushtool(handles.toolbar, ...
     'ClickedCallback',  @pushbutton_SavePlot_Callback)
 %----------                                                     ----------%
 
-    function PlotData(~,~)
+    function PltData(~,~)
         data = get(handles.uitable,'Userdata');
         tmp = get(handles.uitable, 'Rowname');  % Get data stored in the Data Details table as "Userdata"
         Labels = data(:,3);                     % Labels for each data set 
@@ -366,18 +367,42 @@ handles.uitable = uitable(handles.panel_DataDetails,...
         indices = event.Indices();                      % Index the edited cell
         input = cell2mat(tmp(indices(1), indices(2)));  % Input kept as a number
 
-        if indices(2)>3                                 % If a cell in columns 4, 5, 6 or 7 is changed                            
+        if indices(2)>3                                 % If a cell in columns 4, 5, 6 or 7 changes                            
             if ~isnan(input)                            % check if it's not NaN 
-                set(hObject, 'Userdata', tmp);          % keeps Data in the table and updates Userdata 
+                 
+            
+                if (indices(2) == 4 || indices(2) == 7)... % If a cell in columns 4 or 7 changes
+                    && rem(2*input,2) ~=0                  % and it's not integer                           
+                    warndlg(['Are you sure this is the correct input? ' ...
+                             'Tipicaly the number of patients in the study and the total treament time are positive, ' ...
+                             'non-zero, integer values.'], 'Input Warning')
+              
+
+                elseif (indices(2) == 4 || indices(2) == 5 ||... % If a cell in the columns 4, 5,
+                    indices(2) == 6 || indices(2) == 7)...   % 6 or 7 changes
+                    && input <= 0                            % and it's not positive
+                    
+                    prevState = get(hObject, 'Userdata');   % gets previous state of the table stored in the Userdata
+                    set(hObject, 'Data', prevState)         % updates the data in the table back to the previous state, before editing
+                    errordlg(['Number of patients in the study, total prescription dose, ' ...
+                              'dose per fraction and total treatment time should be positive, non-zero values.'], 'Invalid Input')
+
+                else 
+                    set(hObject, 'Userdata', tmp);          % keeps Data in the table and updates Userdata
+                end
             else                                        % If input is NaN
                 prevState = get(hObject, 'Userdata');   % gets previous state of the table stored in the Userdata
                 set(hObject, 'Data', prevState)         % updates the data in the table back to the previous state, before editing
-                msgbox('Input should be a number')      % warns what the input must be
+                errordlg(['Input must be a number!' ...      % Propts what the input must be
+                          'Use point decimal separator (e.g. 3.14 instead of 3,14).' ...
+                          'Cientific notation is valid (e.g. 314 = 3.14e2). ' ...
+                          'Number of patients in the study, total prescription dose, ' ...
+                          'dose per fraction and total treatment time should be positive, non-zero values.'], 'Invalid Input') 
             end
 
-        elseif indices(2) == 1                          % If a cell in column 1 is changed (Selection state)
+        elseif indices(2) == 1                          % If a cell in column 1 changes (Selection state)
             set(hObject, 'Userdata', tmp);              % updates Userdata
-            PlotData
+            PltData
         end
     end
 
@@ -404,7 +429,11 @@ handles.panel_Plot = uipanel('Parent',mainFig,...
 handles.axes_Time = axes('Parent',handles.panel_Plot,...
     'Units','Normalized','Position',[0.1 0.1 0.4 0.85],...
     'Visible','on');
-xlabel('Time (months)'),ylabel('SR (%)'), axis([0 1 0 100]), title(' '), hold on
+xlabel('Time (months)'),...
+ylabel('SR (%)'),...
+axis([0 1 0 100]),...
+title(' '),...
+hold on
 enableDefaultInteractivity(handles.axes_Time)
  
 %-------------------------
@@ -413,7 +442,11 @@ enableDefaultInteractivity(handles.axes_Time)
 handles.axes_BED = axes('Parent',handles.panel_Plot,...
     'Units','Normalized','Position',[0.57 0.1 0.4 0.85],...
     'Visible','on');
-xlabel('BED (Gy)'),ylabel('SR (%)'), axis([0 1 0 100]), title(' '), hold on
+xlabel('BED (Gy)'),...
+ylabel('SR (%)'),...
+axis([0 1 0 100]),...
+title(' '),...
+hold on
 enableDefaultInteractivity(handles.axes_BED)
 %----------                                                     ----------% 
 
@@ -455,10 +488,9 @@ handles.radiobutton_Fit1 = uicontrol(handles.FitSelection,...
                              ' </center> <br />' ...
                              'SR: Survival Rate in percentage (%) <br />' ...
                              '&tau: enlapsed time from the beggining of the treatment (UNITS???) <br />' ...
-                             '&gamma = ln2/T<sub>d</sub>, &alpha and &beta characterize the intrinsic radiosensitivity of cells >br />' ...
+                             '&gamma = ln2/T<sub>d</sub>, &alpha and &beta characterize the intrinsic radiosensitivity of cells <br />' ...
                              'T<sub>d</sub>: potential doubling time <br />' ...
                              'K, a and &delta are the remaining fitting parameters. </html>']);
-
 
 handles.radiobutton_Fit2 = uicontrol(handles.FitSelection,...
     'Tag',                      'radiobutton_Fit2',...
@@ -480,8 +512,7 @@ handles.radiobutton_Fit2 = uicontrol(handles.FitSelection,...
                                  'Dependence of tumor cells on D, d, T and &tau is given by the following LQ inspired model: <br />' ...
                                  'K = K<sub>50</sub> exp(-[&alpha(1+d/(&alpha/&beta))D - &gamma T -(&gamma(&tau - T))<sup>&delta</sup>]) <br />' ...
                                  '(&gamma(&tau - T))<sup>&delta</sup> characterizes the time dependence of tumor regrowth after completions of RT. </html>']);
-
-    
+ 
     function FitSelection_Callback(hObject,~)
         tmp = get(hObject, 'SelectedObject');
         if strcmp(tmp.String, 'Fit1')
@@ -496,7 +527,6 @@ handles.radiobutton_Fit2 = uicontrol(handles.FitSelection,...
             set(handles.fit2optionsuitable, 'Visible', 'on');
         end
     end
-
 
 %----------------------------
 % "MODEL OPTIONS" UITABLE
@@ -550,32 +580,46 @@ handles.fit2optionsuitable = uitable(panel_Fit,...
                           'NOTES: <br />' ...
                           '- the initial guess should be inside the lower to upper limits range; <br />' ...
                           '- the wider the range, the more probable is that the algorithm will not converge to an optimal solution, or will converge at all; </html>']},...
-    'CellEditCallback', @fitoptionsuitable_Callback,...
-    'CellSelectionCallback', @CellSelectionCalback);
+    'CellEditCallback', @fitoptionsuitable_Callback);
 
-    function fitoptionsuitable_Callback(hObject,event)
-        
+    function fitoptionsuitable_Callback(hObject,event)        
         tmp = get(hObject,'Data');                       % keep the data from the table somwhere
         input = cell2mat(...
-                tmp(event.Indices(1),event.Indices(2))); % The input given by the user is kept as a double
-        if ~isnan(input)                                 % If the input is other than numeric, it will be passed as
-            set(hObject, ...                             % a NaN double;
-                'Userdata',tmp);                         % If the input is not a NaN, then it's kept on the table and stored in the Userdata
+        tmp(event.Indices(1),event.Indices(2)));         % The input given by the user is kept as a double
+                                                         % If the input is other than numeric, it will be passed as
+                                                         % a NaN double;
+        if ~isnan(input)                                 % In the case it's a number                               
+                                                         
+            if input <0                                  % Check if it's not negative
+                prevState = get(hObject, 'Userdata');    % Gets the previous state of the table, stored in the Userdata
+                set(hObject, ...
+                    'Data', prevState);                  % Updates the data in the table back to the previous state, before editing
+                errordlg(['These parameters are positive, non-zero values. '...
+                          'Use point decimal separator (e.g. 3.14 instead of 3,14). ' ...
+                          'Cientific notation is valid (e.g. 314 = 3.14e2).'], 'Invalid Input')
+                                                         
+                                                         % And check if it's not zero in the case 
+            elseif input == 0 && event.Indices(1) ~= 2   % the change is on rows 1 or 3 (initial guess and upper limit)
+                warndlg(['Are you sure this is the correct input? '...
+                         'Tipicaly these parameters are positive, non-zero values. '...
+                         'Use point decimal separator (e.g. 3.14 instead of 3,14). ' ...
+                         'Cientific notation is valid (e.g. 314 = 3.14e2).'], 'Input Warning')
+            end
+
+        set(hObject, ...                                 % If the input is not a NaN, and fullfill the previous conditions                          
+            'Userdata',tmp);                             % then it's kept on the table and stored in the Userdata                            
+            
         else                                             % Otherwise, if the input is NaN
             prevState = get(hObject, 'Userdata');        % Gets the previous state of the table, stored in the Userdata
             set(hObject, ...
                 'Data', prevState);                      % Updates the data in the table back to the previous state, before editing
-            errordlg(['Input must be a number!' ...      % Propts what the input must be
-                      'Use point decimal separator (e.g. 3.14 instead of 3,14).' ...
-                      ' Cientific notation is valid (e.g. 365 = 3.65e2).'], 'Input Error')            
+            errordlg(['Input must be a number! ' ...     % Tells what the input must be
+                      'Tipicaly these parameters are positive, non-zero values.'...
+                      'Use point decimal separator (e.g. 3.14 instead of 3,14). ' ...
+                      'Cientific notation is valid (e.g. 314 = 3.14e2).'], 'Invalid Input')            
         end
      end
 
-    function CellSelectionCalback(hObject, eventdata, handles)
-
-        %msgbox('Done');
-
-    end
 
 %------------------------------------------------
 % "PERFORM FIT" BUTON
@@ -600,8 +644,9 @@ handles.pushbutton_fit = uicontrol(panel_Fit,...
         DataFiles = strings(0);
         DataSetsList = get(handles.uitable,'RowName');
        
+        %%%   !!!   MENSAGEN DE ERRO QUANDO VAZIO   !!!   %%%
         if isempty(data)                                     % If the table is empty
-            disp('No data to show')                          % Nothing to display
+            helpdlg('No data to show!','')                   % nothing to display
         else                                                 % If the table contains data
             cla(handles.axes_Time, 'reset')                  % clear both axes
             cla(handles.axes_BED, 'reset')
@@ -617,14 +662,15 @@ handles.pushbutton_fit = uicontrol(panel_Fit,...
             end
         if strcmp(state1, 'on')                                                     % If Fit1 model it's selected
             Bounds = get(handles.fit1optionsuitable, 'Userdata');                   % Check initial guess, upper and lower bounds to perform the fit
-            [K, alpha, beta, gamma, a, Td, delta] = fit1(file_names, data, Bounds); % Performs Fit1
+            [K, alpha, beta, gamma, a, Td, delta] =...
+                        fit1(file_names, data, Bounds);                             % Performs Fit1
             FitData = {round(str2double(K),5)...                                    % Stores fited parameters
                        round(str2double(alpha),5)...
                        round(str2double(beta),5)...
                        round(str2double(alpha)/str2double(beta),3)...
                        round(str2double(gamma),5)...
-                       round(str2double(a),5)...
                        round(str2double(Td),0)...
+                       round(str2double(a),5)...
                        round(str2double(delta),5)};
             set(handles.fiteduitable1,...                   % Keep fited parameters information
                 'Data', FitData,...                         % and displays it on the table
@@ -634,10 +680,11 @@ handles.pushbutton_fit = uicontrol(panel_Fit,...
             BED(data);                                      % Performs BED calculation
             %msgbox('Complete!')
 
-        elseif strcmp(state2, 'on')                                                              % If Fit2 model is selected
-            Bounds = get(handles.fit2optionsuitable, 'Userdata');                                % Check initial guess, upper and lower bounds to perform the fit
-            [K50_K0, alpha, beta, gamma, Td, sigmak_k0, delta] = fit2(file_names, data, Bounds); % Performs Fit2
-            FitData = {RoundStr2Double(K50_K0,3)...                                              % Stores fited parameters
+        elseif strcmp(state2, 'on')                                     % If Fit2 model is selected
+            Bounds = get(handles.fit2optionsuitable, 'Userdata');       % Check initial guess, upper and lower bounds to perform the fit
+            [K50_K0, alpha, beta, gamma, Td, sigmak_k0, delta] =...
+                                    fit2(file_names, data, Bounds);     % Performs Fit2
+            FitData = {RoundStr2Double(K50_K0,3)...                     % Stores fited parameters
                        RoundStr2Double(alpha,5)...
                        RoundStr2Double(beta,3)...
                        round(str2double(alpha)/str2double(beta),5)...
@@ -756,28 +803,19 @@ handles.fiteduitable2 = uitable(handles.panel_Fited,...
     function fiteduitable_Callback(~,~)
     end
 
-%-----------------------------------
-% "FITED PARAMETERS" SAVE PLOT BUTTON
-%-----------------------------------
-% handles.pushbutton_SavePlot = uicontrol(handles.panel_Fited,...
-%     'Tag',              'pushbutton_SavePlot',...
-%     'Style',            'pushbutton', ...
-%     'String',           '<html><center />Save<br /> Plot</html>',...
-%     'Units',            'Normalized',...
-%     'Position',         [.80 .005 .1 .25],...
-%     'Enable',           'on',...
-%     'ForegroundColor',  'r',...
-%     'Tooltipstring',    'Perform fit',...
-%     'Callback',         @pushbutton_SavePlot_Callback);
-% 
     function pushbutton_SavePlot_Callback (~,~)
 
         FileName = inputdlg('Enter file name and extension (.png, .pdf, .jpg, .fig, .m, .jpeg, .svg):');
 
-        fignew = figure('Visible','off'); % Invisible figure
-        newAxes = copyobj(handles.axes_BED,fignew); % Copy the appropriate axes
-        set(newAxes,'Position',get(groot,'DefaultAxesPosition')); % The original position is copied too, so adjust it.
-        set(fignew,'CreateFcn','set(gcbf,''Visible'',''on'')'); % Make it visible upon loading
+        fignew = figure('Visible','off','WindowState', 'maximized');        % Invisible figure
+        
+        newAxesBED = copyobj(handles.axes_BED,fignew);                      % Copy the appropriate axes
+        set(newAxesBED,'Position', [.25 .0 .5 .5], 'Units', 'normalized');  % The original position is copied too, so adjust it.
+        
+        newAxesTime = copyobj(handles.axes_Time, fignew);
+        set(newAxesTime, 'Position', [.25 .7 .5 .5], 'Units', 'normalized');
+
+        set(fignew,'CreateFcn','set(gcbf,''Visible'',''on'')');             % Make it visible upon loading
         saveas(fignew,string(FileName));
         delete(fignew);
     end
