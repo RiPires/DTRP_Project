@@ -70,13 +70,16 @@ f = @(x,v,d,D,T_day,T_month) real(100*exp(-v(1).*exp(-(v(2).*(1+(d./(v(2)./v(3))
     %v_min(5) - a months^-1
     %v_min(6) - delta 
 
+
 % Root-mean-square deviation function
-rmsd = rmsd_residuals(file_names, N_values, d_values, D_values, T_day_values, T_month_values, v_min, f);
+% rmsd = rmsd_residuals(file_names, N_values, d_values, D_values, T_day_values, T_month_values, v_min, f);
+
 % Goodness of the fit
 % dof = no of degrees of freedom = 
 % = no. of clinically observed survival data points- no. of free parameters in the fitting function
 dof = n_points-n_param;
-goodfit = rmsd/dof;
+% goodfit = rmsd/dof;
+goodfit = fval/dof; 
 
 % CIs (confidence intervals) calculation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -85,13 +88,25 @@ goodfit = rmsd/dof;
 fit_replicates = []; % array to store the replicas of the fitting parameters
 n = 1000; % number of replicates -> we will get 1000 new values for the fitting parameters
 
+% comment later 
+%%%%%%%%%%%%%%%%%%%%%%
+histogram_study1 = [];
+histogram_study2 = [];
+histogram_study3 = [];
+histogram_study4 = [];
+histogram_study5 = [];
+histograms = {histogram_study1,histogram_study2,histogram_study3,...
+    histogram_study4,histogram_study5};
+%%%%%%%%%%%%%%%%%%%%%%
+
 for i = 1:n 
     % cell array to store the samples for each replicate
     generated_files = cell(1, number_studies);
     for j = 1:number_studies
-        % generating a sample for each file
+        % generating a sample for each file/study
         data_study=load(file_names{j});
         generated_files{j} = sample(data_study);
+        histograms{j} = [histograms{j}; generated_files{j}]; % comment later
     end
 
     % perform the fit for each replica
@@ -101,46 +116,92 @@ for i = 1:n
         % fval_boot: value of the chi-square function
 
     [v_min_boot_old,v_min_boot,fval_boot] = perform_fit(generated_files,N_values,d_values,D_values,T_day_values,T_month_values,v0,lb,ub,f,'bootstrapping');
-   
-    fit_replicates = vertcat(fit_replicates, v_min_boot);
+
+    fit_replicates = [fit_replicates; v_min_boot_old];
+    
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% plotting the histogram for each file/study
+% comment later
+figure;
+title('Histogram of Bootstrapped Replicas');
+for ns = 1:number_studies % for each study
+    points = load(file_names{ns}); % open the file
+    count_points = [];
+    for p = 1:size(points,1) % for each point in the file
+        c = sum(histograms{ns}(:,1) == points(p));
+        % c = number of counts
+        count_points = horzcat(count_points,c);
+    end
+    
+    subplot(2,3,ns); % subplot for each file
+    % create histogram with counts
+    % Create histogram with counts
+    bin_edges = 1:numel(count_points); % Bin edges based on the number of counts
+    bar(bin_edges, count_points);
+
+    xlabel(['Study ' num2str(ns)]);
+    ylabel('Frequency');
+end
+  
+% saving the plot
+saveas(gcf, './results/histograms_boot1.pdf')
+% clear the figure
+clf;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Uncertainties given by the Bootstrapping
-u_boot_plus = zeros(n_param); % array to store the upper uncertainty of the fitting parameters
-u_boot_minus = zeros(n_param); % array to store the lower uncertainty of the fitting parameters
+
+% u_boot_plus = zeros(n_param); % array to store the upper uncertainty of the fitting parameters
+% u_boot_minus = zeros(n_param); % array to store the lower uncertainty of the fitting parameters
+
+u_boot = zeros(n_param); % array to store the uncertainties of the fitting parameters
 CI_u = zeros(n_param); % array to store the upper value of the confidence intervals of the fitting parameters
 CI_l = zeros(n_param); % array to store the lower value of the confidence intervals of the fitting parameters
 
+% for i = 1:n_param
+%     CI = ci_boot(fit_replicates(:,i)); % confidence interval
+%     CI_u(i) = CI(2);
+%     CI_l(i) = CI(1);
+%     [u_plus,u_minus] = uncertainties(v_min(i),CI);
+%     u_boot_plus(i) = u_plus;
+%     u_boot_minus(i) = u_minus;
+% end
+
+% calculating the uncertainties of the parameters
 for i = 1:n_param
-    CI = ci_boot(fit_replicates(:,i)); % confidence interval
-    CI_u(i) = CI(2);
-    CI_l(i) = CI(1);
-    [u_plus,u_minus] = uncertainties(v_min(i),CI);
-    u_boot_plus(i) = u_plus;
-    u_boot_minus(i) = u_minus;
+    u_boot(i) = std(fit_replicates(:,i));
+end
+
+% calculating the uncertainty of Td (index 4)
+% Td = ln2/gamma
+% gamma = v_min_old(4)
+% uncertainty(gamma) = u_boot(4)
+u_Td = uncertainty_quocient(log(2),v_min_old(4),0,u_boot(4));
+% update the value of u_boot
+u_boot(4) = u_Td;
+
+% calculating the uncertainty of alpha/beta (index 3)
+% alpha/beta
+% alpha = v_min_old(2)
+% beta = v_min_old(3)
+% uncertainty(alpha) = u_boot(2)
+% uncertainty(beta) = u_boot(3)
+u_beta = uncertainty_quocient(v_min_old(2),v_min_old(3),u_boot(2),u_boot(3));
+% update the value of u_boot
+u_boot(3) = u_beta;
+
+% calculating the confidence intervals (CI) of the parameters
+for np = 1:n_param
+    CI_l(np) = v_min(np) - u_boot(np);
+    CI_u(np) = v_min(np) + u_boot(np);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Plotting the histograms of the replicas of the parameters to see if they
-% follow a normal distribution
+% Save the results in a file
 parameters_names = {'K','alpha','alpha/beta','Td','a','delta'};
 
-figure;
-for p = 1:n_param
-    subplot(2,3,p);
-    histogram(fit_replicates(:,p));
-    xlabel(parameters_names{p});
-end
-
-%saving the plot
-saveas(gcf, './results/histograms_boot1.pdf')
-
-% Clear the figure
-clf
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Save the results in a file
 myfile = fopen('./results/fit1.txt', 'w');  
 
 fprintf(myfile, 'Goodness of the fit: %f\n', goodfit);
@@ -150,13 +211,8 @@ fprintf(myfile, 'Parameters values that minimize the sum of squares: value [- un
 fprintf(myfile, '-----------------\n');
 formatSpec = '%s: %.6f [-%.6f + %.6f]\n CI: [%.6f,%.6f]\n';
 for i = 1:length(parameters_names)
-    fprintf(myfile, formatSpec, parameters_names{i}, v_min(i), u_boot_minus(i), u_boot_plus(i),CI_l(i),CI_u(i));
+    fprintf(myfile, formatSpec, parameters_names{i}, v_min(i), u_boot(i),u_boot(i), CI_l(i),CI_u(i));
 end
-fprintf(myfile, '\n');
-fprintf(myfile, 'Uncertainties given by the Profile-Likelihood Method:\n');
-fprintf(myfile, '-----------------\n');
-fprintf(myfile, 'Parameters values that minimize the sum of squares: value [- uncertainty + uncertainty]:\n');
-
 
 % Close the file
 fclose(myfile);
@@ -208,6 +264,7 @@ function [param,new_param,chi2_val] = perform_fit(files,N,d,D,T_day,T_month,init
         % param->parameters that minimize the chi-square function
         % chi2_val->value of the chi-square function
     [param,chi2_val] = fmincon(chi2, initial_guess, [], [], [], [], lower_bound, upper_bound, [], options);
+
     % new list of parameters, where two of them were changed:
     % beta -> alpha/beta
     % gamma -> Td
@@ -257,28 +314,28 @@ end
 
 % Calculates the residuals of the points of all datafiles
 % to obtain the Root-mean-square deviation function
-function r = rmsd_residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, v, f)
-    s = 0; %sum for all the points of all the files
-    for i = 1:length(files)
-        data = load(files{i});
-        x = data(:, 1); %x (tau) - elapsed time in months
-        y = data(:, 2); %y (SR) - survival rate in percentage
-        N = N_list(i);
-        d = d_list(i);
-        D = D_list(i);
-        T_day = T_day_list(i);
-        T_month = T_month_list(i);
-        sf = 0; %sum for the points of a specific file
-
-        for j = 1:length(x)
-            y_fit = f(x(j),v,d,D,T_day,T_month);
-            res = (y_fit - y(j)).^2 / N;
-            sf = res + sf;
-        end
-        s = sf + s;
-    end
-    r = sqrt(s);
-end
+% function r = rmsd_residuals(files, N_list, d_list, D_list, T_day_list, T_month_list, v, f)
+%     s = 0; %sum for all the points of all the files
+%     for i = 1:length(files)
+%         data = load(files{i});
+%         x = data(:, 1); %x (tau) - elapsed time in months
+%         y = data(:, 2); %y (SR) - survival rate in percentage
+%         N = N_list(i);
+%         d = d_list(i);
+%         D = D_list(i);
+%         T_day = T_day_list(i);
+%         T_month = T_month_list(i);
+%         sf = 0; %sum for the points of a specific file
+% 
+%         for j = 1:length(x)
+%             y_fit = f(x(j),v,d,D,T_day,T_month);
+%             res = (y_fit - y(j)).^2 / N;
+%             sf = res + sf;
+%         end
+%         s = sf + s;
+%     end
+%     r = sqrt(s);
+% end
 
 % Generates a sample for a given datafile (for bootstraping)
 function s = sample(data_file)
@@ -293,28 +350,35 @@ function s = sample(data_file)
         b_value(1) = x(Index); % x value of the generated point
         b_value(2) = y(Index); % y value of the generated point
         %arraySample=[arraySample,b_value];
-        arraySample = vertcat(arraySample, b_value);
+        %arraySample = vertcat(arraySample, b_value);
+        arraySample = [arraySample; b_value];
     end
     s = arraySample;
 end
 
+% Returns the uncertainty of a quocient of two parameters a, and b
+% with uncertainties un_a, and un_b, respectively
+function uq = uncertainty_quocient(a,b,un_a,un_b)
+    uq = sqrt( (1/b^2)*(un_a)^2 + ((-a/b^2)^2)*((un_b)^2) );
+end
+
 % Returns the confidence interval of a fitting parameter with replicas 
 % obtained from Bootstrapping
-function ci = ci_boot(param_rep)
+% function ci = ci_boot(param_rep)
     % param_rep -> replicates for the parameter in question
     % Calculating the 95% confidence interval by excluding
     % the most extreme 2.5% of the values in each direction
-    ci = prctile(param_rep,[2.5, 97.5]);
-end
+    % ci = prctile(param_rep,[2.5, 97.5]);
+% end
 
 % Gives the uncertainty lower and upper bounds
-function [u_p,u_m] = uncertainties(parameter,ci)
+% function [u_p,u_m] = uncertainties(parameter,ci)
     % parameter -> value of the fitting parameter
     % ci -> confidence interval of that parameter
-    u_p = ci(2) - parameter;
-    u_m = parameter - ci(1);
+    % u_p = ci(2) - parameter;
+    % u_m = parameter - ci(1);
 
-end
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%
                

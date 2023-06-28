@@ -6,17 +6,16 @@ D_values = cell2mat(DataDetails(:,5));      % D - prescription dose Gy
 d_values = cell2mat(DataDetails(:,6));      % d - dose per fraction Gy/fx
 T_day_values = cell2mat(DataDetails(:,7));  % T_day - treatment time in days
 
-%v - vector with parameters obtained from fit2  
+%v - vector with parameters obtained from fit1 or fit2  
     %v(1) - K50/K0
     %v(2) - alpha Gy^-1
     %v(3) - beta Gy^-2
     %v(4) - gamma days^-1
     %v(5) - sigmak/K0
     %v(6) - delta 
-% paper values
-v = [2.03, 0.010, 0.000667, 0.005415, 0.65, 0.20];
-% our values    
-% v = [1.99, 0.0099754, 0.000692, 0.0056126, 0.71, 0.19];
+
+% our values for the fit 2 - change   
+v = [1.99, 0.0099754, 0.000692, 0.0056126, 0.71, 0.19]; 
 
 %x (BED) - Biologically effective dose (Gy)
 x_values = zeros(size(N_values));
