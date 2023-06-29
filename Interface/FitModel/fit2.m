@@ -80,8 +80,6 @@ disp(['delta: ', delta]);
 
 
 % Plotting
-labels = cell2mat(DataDetails(:,3));
-
 hold on
 x_points = linspace(1, 70, 71);
 
@@ -93,20 +91,19 @@ for i = 1:numel(file_names)
         y = data(:, 2);
 
         %original points
-        my_color = rand(1,3);
+        colors = {'m', 'b', 'k', 'r', 'g', 'c', 'y', '#FF7F50', '#9FE2BF', '#CCCCFF', '#CCD1D1', '#FFF978'};
         all_marks = {'o','+','*','x','s','d','^','v','>','<','p','h'};
-
+        label = cell2mat(DataDetails(i,3));
         plot(x, y, ...
             'LineStyle','none', ...
             'Marker',all_marks{mod(i,12)},...
             'LineWidth', 2, ...
-            'Color', my_color, ...
+            'Color', colors{i}, ...
             'MarkerSize', 6, ...    
-            'DisplayName', labels(i,:))
+            'DisplayName', label)
 
         %fitted function
-        fit_label = string(strcat('Fit-',labels(i,:)));        
-        add_color = [my_color(1)/(my_color(1)+0.7), my_color(2)/(my_color(2)+0.7), my_color(3)/(my_color(3)+0.7)];
+        fit_label = string(strcat('Fit-',label));       
 
         for k = 1:length(x_points)
             sr = fit(x_points(k),v_min,d_values(i),D_values(i),T_day_values(i),'plotting');
@@ -119,7 +116,7 @@ for i = 1:numel(file_names)
         
         plot(x_plot, y_plot, '--', ...
              'LineWidth', 2, ...
-             'Color', add_color, ...
+             'Color', colors{i}, ...
              'HandleVisibility', 'on',...
              'DisplayName',fit_label)
  end

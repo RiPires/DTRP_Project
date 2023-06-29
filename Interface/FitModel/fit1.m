@@ -80,36 +80,34 @@ disp(['delta: ', delta, ' ± ', num2str(un(6))]);
 
 
 % Plotting
-labels = cell2mat(DataDetails(:,3));
-
 hold on
 x_points = linspace(0, 70, 71);
-
+disp(numel(file_names))
 for i = 1:numel(file_names)
         data = load(file_names{i});
         x = data(:, 1);
         y = data(:, 2);
 
         %original points
-        my_color = rand(1,3);
+        colors = {'m', 'b', 'k', 'r', 'g', 'c', 'y', '#FF7F50', '#9FE2BF', '#CCCCFF', '#CCD1D1', '#FFF978'};
         all_marks = {'o','+','*','x','s','d','^','v','>','<','p','h'};
 
+        label = cell2mat(DataDetails(i,3));
         plot(x, y, ...
             'LineStyle','none', ...
             'Marker',all_marks{mod(i,12)},...
             'LineWidth', 2, ...
-            'Color', my_color, ...
+            'Color', colors{i}, ...
             'MarkerSize', 6, ...    
-            'DisplayName', labels(i,:))
+            'DisplayName', label)
         
-        fit_label = string(strcat('Fit-',labels(i,:)));
+        fit_label = string(strcat('Fit-',label));
 
         %fitted function
-        add_color = [my_color(1)/(my_color(1)+0.7), my_color(2)/(my_color(2)+0.7), my_color(3)/(my_color(3)+0.7)];
         plot(x_points, f(x_points,v_min,d_values(i),D_values(i),T_day_values(i),T_month_values(i)), ...
             '--', ...
             'LineWidth', 2, ...
-            'Color', add_color, ...
+            'Color', colors{i}, ...
             'DisplayName', fit_label,...
             'HandleVisibility', 'on')
  end
