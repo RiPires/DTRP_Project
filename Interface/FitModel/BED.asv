@@ -80,7 +80,12 @@ function BED(file_names,DataDetails,FitData,fnumber)
             for t = 1:size(tau)
                 if abs(month-tau(t)) < 2 % if there is a tau thar corresponds to the year in question
                     sr_val = sr(t); % respective SR (%)
-                    bed_val = bedfunction(d_values(s),v(2),v(4),D_values(s),v(5),T_day_values(s));
+                    if fnumber == 1 % fit 1 -> alpha (v(2)), alpha_beta (v(4)), a (v(7)), delta (v(8)), T in months
+                        (d,alpha,alpha_beta,D,gamma_or_a,T)
+                        bed_val = bedfunction(d_values(s),v(2),v(4), D_values(s), v(7), v(8),T_day_values(s)/30);
+                    elseif fnumber == 2 % fit 2 -> alpha (v(2)), alpha_beta (v(4)), gamma (v(5)), delta (v(8)), T in days
+                        bed_val = bedfunction(d_values(s),v(2),v(4), v(5),D_values(s),v(8),T_day_values(s));
+                    end
                     errhigh = data(:,3); % extracting the error bars
                     errlow = data(:,4); 
                     pointsyear{m} = vertcat(pointsyear{m}, [bed_val,sr_val,errhigh(t),errlow(t)]);
@@ -92,24 +97,25 @@ function BED(file_names,DataDetails,FitData,fnumber)
 
     %x (BED) - Biologically effective dose (Gy):
     % array with BED values to plot the curves
-    T_points_days = linspace(1,100,100); %treatment time in days
-    T_points_months = [] %treatment time in months
+    T_points = linspace(1,100,100); %treatment time in days
     d = 2; %dose per fraction in Gy/fx
     BED_points = []; %BED in Gy
-    for i = 1:length(T_points_days)
-        n = calculate_n(T_points_days(i)); %n->number of fractions
+    for i = 1:length(T_points)
+        n = calculate_n(T_points(i)); %n->number of fractions
         D = d * n; %D->dose values in Gy
-        B = bedfunction(d,v(2),v(4),D,v(5),T_points_days(i)); %B->BED in Gy 
+        if fnumber == 1 % fit 1 -> alpha (v(2)), a (v(7)), delta (v(8)), T in months
+            B = bedfunction(d,v(2),v(7),D,v(8),T_points(i)/30); %B->BED in Gy 
+        elseif fnumber == 2 % fit 2 -> alpha (v(2)), gamma (v(5)), delta (v(8)), T in days
+            B = bedfunction(d,v(2),v(5),D,v(8),T_points(i)); %B->BED in Gy
+        end
+
         BED_points = [BED_points,B];
-        t = T_points_days(i)/30; % time in months
-        T_points_months = [T_points_months,t];
     end
 
 
     % Plotting
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    tau_values_days = {365,730,1095,1460}; % for fit 2, where T is in days
-    tau_values_months = {12,24,36,48}; % for fit 1, where T is in moths
+    tau_values = {365,730,1095,1460};
     colors = {'#FE0100','#0000F7','#FD04FC','#000000'};
     years_label = {'\tau = 1y', '\tau = 2y', '\tau = 3y', '\tau = 4y'};
     markers = {'s','v','v','o'};
@@ -119,16 +125,15 @@ function BED(file_names,DataDetails,FitData,fnumber)
     % for each year
     for i = 1:number_years
         points = pointsyear{i}; % points for that year
-        tau_day = tau_values_days{i};
-        tau_month = tau_values_months{i};
+        tau = tau_values{i};
         % plotting the curve:
         sr_plot = [];
         bed_plot = [];
         for j = 1:length(BED_points)
             if fnumber == 1
-                sr = fit1bed(BED_points(j),tau_month,v,T_points_months(j)); % fit 1 -> T is in months
+                sr = fit1bed(BED_points(j),tau,v,T_points(j)); 
             elseif fnumber == 2
-                sr = fit2bed(BED_points(j),tau_day,v,T_points_days(j)); % fit 2 -> T is in days
+                sr = fit2bed(BED_points(j),tau,v,T_points(j));
             end
 
             if ~isnan(sr)

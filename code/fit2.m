@@ -62,13 +62,6 @@ f = @(x,v,d,D,T_day) fitting(x,v,d,D,T_day,'fitting');
 
 [v_min_old,v_min,fval] = perform_fit(file_names,N_values,d_values,D_values,T_day_values,v0,lb,ub,f,'fitting');
 
-%v_min - vector with found parameters 
-    %v_min(1) - K 
-    %v_min(2) - alpha Gy^-1
-    %v_min(3) - alpha/beta Gy
-    %v_min(4) - Td days
-    %v_min(5) - a months^-1
-    %v_min(6) - delta 
 
 % Root-mean-square deviation function
 % rmsd = rmsd_residuals(file_names, N_values, d_values, D_values, T_day_values, v_min, f);
