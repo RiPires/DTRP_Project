@@ -92,10 +92,10 @@ axis equal off
 %--------------------------------------------------------------------------
 % TEXT AREA
 %--------------------------------------------------------------------------
-dim = [.11 .8 .1 .20];
-str = {'RADIANCE_   v1.0.0' 'Authors: A. Pardal, R. Pires, R. Santos'...
-       'github.com/RiPires/DTRP&_Project.git'};
-annotation('textbox',dim,'String',str,'FitBoxToText','on', In);
+dim = [.11 .79 .1 .20];
+str = {'RADIANCE_v1.0.0' 'Authors: A. Pardal, R. Pires, R. Santos'...
+       'github.com/RiPires/DTRP_Project.git'};
+annotation('textbox',dim,'String',str,'FitBoxToText','on', 'Interpreter', 'none');
 %----------                                                     ----------%
 
 %--------------------------------------------------------------------------
@@ -163,6 +163,10 @@ handles.uimenu_fit = uimenu(mainFig, ...
     handles.uimenu_dofit = uimenu(handles.uimenu_fit,...
                                   'Label',      'Perform Fit',...
                                   'Callback',   @pushbutton_Fit_Callback);
+
+        handles.uimenu_dofit = uimenu(handles.uimenu_fit,...
+                                  'Label',      'Perform Fit',...
+                                  'Callback',   @pushbutton_Fit_Callback);
 %-----------
 % PLOT
 %-----------
@@ -183,7 +187,12 @@ handles.uimenu_plot = uimenu(mainFig, ...
 % HELP
 %-----------
 handles.uimenu_hp = uimenu(mainFig, ...
-        	                'Label', 'Help');
+        	                'Label', 'Help',...
+                            'Callback', @Help_Callback);
+
+    function Help_Callback(~,~)
+        open("RADIANCE-Guide_v1.pdf")
+    end
 
 %-----------
 % ABOUT
@@ -200,7 +209,6 @@ handles.uimenu_abt = uimenu(mainFig, ...
 %--------------------------------------------------------------------------
 % TOOLBAR
 %--------------------------------------------------------------------------
-%%%   !!!   TO DO   !!!   %%% 
 handles.toolbar=uitoolbar(mainFig);
 
 %-------------------
@@ -243,10 +251,6 @@ uipushtool(handles.toolbar, ...
             set(handles.uitable, ...                        % and past it to the "RowName"
                 'RowName',FileList)                                                         
         end
-
-
-        %%%   Verificar formato do ficheiro   %%%
-
 
         data(size(data,1)+1,:) = cell(1,7);                 % Add an extra row to the "Userdata" and "Data" properties of the table
         set(handles.uitable, ...                            % Update them
@@ -294,7 +298,7 @@ uipushtool(handles.toolbar, ...
 %---------------------
 % "Save Plot" Button
 %---------------------
-myimage = imread('./SavePlotIcon2.png');
+myimage = imread('./SavePlotIcon.png');
 myIcon = imresize(myimage, [20, 20]);
 uipushtool(handles.toolbar, ...
     'TooltipString',    'Save Plot',...

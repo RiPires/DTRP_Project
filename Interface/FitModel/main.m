@@ -92,7 +92,7 @@ axis equal off
 %--------------------------------------------------------------------------
 % TEXT AREA
 %--------------------------------------------------------------------------
-dim = [.11 .79 .1 .20];
+dim = [.1 .79 .1 .20];
 str = {'RADIANCE_v1.0.0' 'Authors: A. Pardal, R. Pires, R. Santos'...
        'github.com/RiPires/DTRP_Project.git'};
 annotation('textbox',dim,'String',str,'FitBoxToText','on', 'Interpreter', 'none');
@@ -163,6 +163,25 @@ handles.uimenu_fit = uimenu(mainFig, ...
     handles.uimenu_dofit = uimenu(handles.uimenu_fit,...
                                   'Label',      'Perform Fit',...
                                   'Callback',   @pushbutton_Fit_Callback);
+
+    handles.uimenu_saveresults = uimenu(handles.uimenu_fit,...
+                              'Label',      'Save Results',...
+                              'Callback',   @SaveResults_Callback);
+
+        function SaveResults_Callback(~,~)
+            SelectedFit = get(handles.uitable_ResultFit1, 'Visible');       % Checks selected model      
+            if strcmp(SelectedFit, 'on')                                    % If Fit1 is selected
+                Results = cell2table(get(handles.uitable_ResultFit1, 'Userdata'));
+                Results.Properties.VariableNames = ...
+                ["K", "alpha [Gy^-1]", "beta [Gy^-2]", "alpha/beta [Gy]", "gamma", "Td [day]", "a [mon^-1]", "delta"];
+            elseif strcmp(SelectedFit, 'off')                               % If Fit2 is selected
+                Results = cell2table(get(handles.uitable_ResultFit2, 'Userdata'));
+                Results.Properties.VariableNames = ...
+                ["K50/K0", "alpha [Gy^-1]", "beta [Gy^-2]", "alpha/beta [Gy]", "gamma", "Td [day]", "sigma_k/K0", "delta"];
+            end
+            FileName = inputdlg('Enter file name and extension (.m, .txt, .csv):');
+            writetable(Results, string(FileName));                          % write file
+        end
 %-----------
 % PLOT
 %-----------
@@ -183,7 +202,12 @@ handles.uimenu_plot = uimenu(mainFig, ...
 % HELP
 %-----------
 handles.uimenu_hp = uimenu(mainFig, ...
-        	                'Label', 'Help');
+        	                'Label', 'Help',...
+                            'Callback', @Help_Callback);
+
+    function Help_Callback(~,~)
+        open("RADIANCE-Guide_v1.pdf")
+    end
 
 %-----------
 % ABOUT
@@ -200,7 +224,6 @@ handles.uimenu_abt = uimenu(mainFig, ...
 %--------------------------------------------------------------------------
 % TOOLBAR
 %--------------------------------------------------------------------------
-%%%   !!!   TO DO   !!!   %%% 
 handles.toolbar=uitoolbar(mainFig);
 
 %-------------------
@@ -243,10 +266,6 @@ uipushtool(handles.toolbar, ...
             set(handles.uitable, ...                        % and past it to the "RowName"
                 'RowName',FileList)                                                         
         end
-
-
-        %%%   Verificar formato do ficheiro   %%%
-
 
         data(size(data,1)+1,:) = cell(1,7);                 % Add an extra row to the "Userdata" and "Data" properties of the table
         set(handles.uitable, ...                            % Update them
@@ -754,7 +773,7 @@ handles.uitable_ResultFit2 = uitable(handles.panel_Results,...
                          '<html><center />&alpha<br /> [Gy<sup>-1</sup>]</html>' ...
                          '<html><center />&beta<br />[Gy<sup>-2</sup>]</html>' ...
                          '<html>&alpha<span>&#47;</span>&beta<br />[Gy]</html>' ...
-                         '<html<center>&gamma <br /> [day<sup>-1</sup>]</center></html>' ...
+                         '<html><center>&gamma <br /> [day<sup>-1</sup>]</center></html>' ...
                          '<html><center>T<sub>d</sub><br />[day]</html>' ...
                          '<html><center /> &sigma<sub>k</sub> <span>&#47;</span>K<sub>0</sub></html>' ...
                          '<html>&delta</html>'},...
