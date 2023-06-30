@@ -92,10 +92,10 @@ axis equal off
 %--------------------------------------------------------------------------
 % TEXT AREA
 %--------------------------------------------------------------------------
-dim = [.11 .79 .1 .20];
-str = {'RADIANCE_v1.0.0' 'Authors: A. Pardal, R. Pires, R. Santos'...
-       'github.com/RiPires/DTRP_Project.git'};
-annotation('textbox',dim,'String',str,'FitBoxToText','on', 'Interpreter', 'none');
+dim = [.11 .8 .1 .20];
+str = {'RADIANCE_   v1.0.0' 'Authors: A. Pardal, R. Pires, R. Santos'...
+       'github.com/RiPires/DTRP&_Project.git'};
+annotation('textbox',dim,'String',str,'FitBoxToText','on', In);
 %----------                                                     ----------%
 
 %--------------------------------------------------------------------------
@@ -294,7 +294,7 @@ uipushtool(handles.toolbar, ...
 %---------------------
 % "Save Plot" Button
 %---------------------
-myimage = imread('./SavePlotIcon.png');
+myimage = imread('./SavePlotIcon2.png');
 myIcon = imresize(myimage, [20, 20]);
 uipushtool(handles.toolbar, ...
     'TooltipString',    'Save Plot',...
