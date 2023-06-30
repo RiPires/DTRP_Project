@@ -93,7 +93,7 @@ goodfit = fval/dof;
 % Bootstraping 
 
 fit_replicates = []; % array to store the replicas of the fitting parameters
-n = 100; % number of replicates -> we will get 1000 new values for the fitting parameters
+n = 10; % number of replicates -> we will get 1000 new values for the fitting parameters
 
 
 for i = 1:n 
@@ -189,6 +189,8 @@ up = [u_K50_K0,u_alpha,u_beta,u_alpha_beta,u_gamma,u_Td,u_sigmak_K0,u_delta];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plotting
+labels = cell2mat(DataDetails(:,3));
+
 hold on
 x_points = linspace(1, 70, 71);
 
@@ -196,7 +198,6 @@ colors = {'#FD04FC','#0000F7','#000000','#FD6C6D','#46FD4B'};
 %studies_names = {'Liang','Dawson','SeongH','SeongM','SeongL'};
 markers = {'v','o','^','s','o'};
 
-<<<<<<< HEAD
 for i = 1:number_studies
     data = load(file_names{i});
     y_plot = [];
@@ -221,38 +222,36 @@ for i = 1:number_studies
     hold on;
 end
 
-=======
-        %original points
-        colors = {'m', 'b', 'k', 'r', 'g', 'c', 'y', '#FF7F50', '#9FE2BF', '#CCCCFF', '#CCD1D1', '#FFF978'};
-        all_marks = {'o','+','*','x','s','d','^','v','>','<','p','h'};
-        label = cell2mat(DataDetails(i,3));
-        plot(x, y, ...
-            'LineStyle','none', ...
-            'Marker',all_marks{mod(i,12)},...
-            'LineWidth', 2, ...
-            'Color', colors{i}, ...
-            'MarkerSize', 6, ...    
-            'DisplayName', label)
-
-        %fitted function
-        fit_label = string(strcat('Fit-',label));       
-
-        for k = 1:length(x_points)
-            sr = fit(x_points(k),v_min,d_values(i),D_values(i),T_day_values(i),'plotting');
-            if ~isnan(sr)
-                tau = x_points(k);
-                y_plot = [y_plot, sr];
-                x_plot = [x_plot, tau];
-           end
-        end
-        
-        plot(x_plot, y_plot, '--', ...
-             'LineWidth', 2, ...
-             'Color', colors{i}, ...
-             'HandleVisibility', 'on',...
-             'DisplayName',fit_label)
- end
->>>>>>> 7d538f90190b729241fa6efa6e7da5ceb12918e5
+%         %original points
+%         colors = {'m', 'b', 'k', 'r', 'g', 'c', 'y', '#FF7F50', '#9FE2BF', '#CCCCFF', '#CCD1D1', '#FFF978'};
+%         all_marks = {'o','+','*','x','s','d','^','v','>','<','p','h'};
+%         label = cell2mat(DataDetails(i,3));
+%         plot(x, y, ...
+%             'LineStyle','none', ...
+%             'Marker',all_marks{mod(i,12)},...
+%             'LineWidth', 2, ...
+%             'Color', colors{i}, ...
+%             'MarkerSize', 6, ...    
+%             'DisplayName', label)
+% 
+%         %fitted function
+%         fit_label = string(strcat('Fit-',label));       
+% 
+%         for k = 1:length(x_points)
+%             sr = fit(x_points(k),v_min,d_values(i),D_values(i),T_day_values(i),'plotting');
+%             if ~isnan(sr)
+%                 tau = x_points(k);
+%                 y_plot = [y_plot, sr];
+%                 x_plot = [x_plot, tau];
+%            end
+%         end
+% 
+%         plot(x_plot, y_plot, '--', ...
+%              'LineWidth', 2, ...
+%              'Color', colors{i}, ...
+%              'HandleVisibility', 'on',...
+%              'DisplayName',fit_label)
+% end
 
 %legend,lables and title
 legend('Location', 'northeast')
