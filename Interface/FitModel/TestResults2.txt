@@ -1,2 +1,0 @@
-K50/K0,alpha,beta,alpha/beta,gamma,Td,sigma_k/K0,delta
-1.99,0.00998,0.001,14.41532,0.00561,123,0.71,0.19

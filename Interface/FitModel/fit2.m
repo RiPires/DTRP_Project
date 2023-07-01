@@ -194,9 +194,9 @@ labels = cell2mat(DataDetails(:,3));
 hold on
 x_points = linspace(1, 70, 71);
 
-colors = {'#FD04FC','#0000F7','#000000','#FD6C6D','#46FD4B'};
-%studies_names = {'Liang','Dawson','SeongH','SeongM','SeongL'};
-markers = {'v','o','^','s','o'};
+colors = {'m', 'b', 'k', 'r', 'g', 'c', 'y', '#FF7F50', '#9FE2BF', '#CCCCFF', '#CCD1D1', '#FFF978'};
+% studies_names = {'Liang','Dawson','SeongH','SeongM','SeongL'};
+markers = {'o','+','*','x','s','d','^','v','>','<','p','h'};
 
 for i = 1:number_studies
     data = load(file_names{i});
@@ -204,11 +204,28 @@ for i = 1:number_studies
     x_plot = [];
     x = data(:,1);
     y = data(:,2);
-    errhigh = data(:,3);
-    errlow = data(:,4);
+    
+    if numel(data(1,:))==2
+        errhigh = zeros(numel(x),1);
+        errlow = zeros(numel(x),1);
+    elseif numel(data(1,:))==4
+        errhigh = data(:,3);
+        errlow = data(:,4);
+    end
+
     %original points
-    plot(x, y, markers{i}, 'LineWidth', 2, 'Color', colors{i},'MarkerSize', 6, 'DisplayName', file_names{i})
-    errorbar(x,y,errlow,errhigh,'Color',colors{i},'LineStyle','none','HandleVisibility', 'off');
+    plot(x, y, markers{i}, ...
+         'LineWidth',   2, ...
+         'Color',       colors{i}, ...
+         'Marker',       markers(i), ...
+         'MarkerSize',  6, ...
+         'DisplayName', string(labels(i,:)))
+
+    errorbar(x,y,errlow,errhigh, ...
+             'Color',           colors{i}, ...
+             'LineStyle',        'none', ...
+             'HandleVisibility', 'off');
+
     %fitted function   
     for xi = 1:length(x_points)
         sr = secondfitting(x_points(xi),v_min_old,d_values(i),D_values(i),T_day_values(i),'plotting');
@@ -218,7 +235,10 @@ for i = 1:number_studies
             x_plot = [x_plot, tau];
         end
     end
-    plot(x_plot, y_plot, '--', 'LineWidth', 2, 'Color', colors{i},'HandleVisibility', 'off')
+    plot(x_plot, y_plot, '--', ...
+         'LineWidth', 2, ...
+         'Color', colors{i}, ...
+         'HandleVisibility', 'off')
     hold on;
 end
 

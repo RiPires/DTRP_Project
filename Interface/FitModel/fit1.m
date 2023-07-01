@@ -165,7 +165,7 @@ alpha = v_min(2);
 u_alpha = u_boot(2);
 
 %beta
-beta = v_min_old(3)
+beta = v_min_old(3);
 u_beta = u_boot(3);
 
 %alpha/beta
@@ -199,18 +199,28 @@ labels = cell2mat(DataDetails(:,3));
 hold on
 x_points = linspace(0, 70, 71);
 
-colors = {'#FD04FC','#0000F7','#000000','#FD6C6D','#46FD4B'};
+colors = {'m', 'b', 'k', 'r', 'g', 'c', 'y', '#FF7F50', '#9FE2BF', '#CCCCFF', '#CCD1D1', '#FFF978'};
 % studies_names = {'Liang','Dawson','SeongH','SeongM','SeongL'};
-markers = {'v','o','^','s','o'};
+markers = {'o','+','*','x','s','d','^','v','>','<','p','h'};
 
 for i = 1:number_studies
     data = load(file_names{i});
     x = data(:,1);
     y = data(:,2);
-    errhigh = data(:,3);
-    errlow = data(:,4);
+
+    if numel(data(1,:))==2
+        errhigh = zeros(numel(x),1);
+        errlow = zeros(numel(x),1);
+    elseif numel(data(1,:))==4
+        errhigh = data(:,3);
+        errlow = data(:,4);
+    end
     %original points
-    plot(x, y, markers{i}, 'LineWidth', 2, 'Color', colors{i},'MarkerSize', 6, 'DisplayName', file_names{i})
+    plot(x, y, markers{i}, ...
+         'LineWidth', 2, ...
+         'Color', colors{i}, ...
+         'MarkerSize', 6, ...
+         'DisplayName', string(labels(i,:)))
     errorbar(x,y,errlow,errhigh,'Color',colors{i},'LineStyle','none','HandleVisibility', 'off');
     %fitted function   
     plot(x_points, f(x_points,v_min_old,d_values(i),D_values(i),T_day_values(i),T_month_values(i)), '--', 'LineWidth', 2, 'Color', colors{i},'HandleVisibility', 'off')

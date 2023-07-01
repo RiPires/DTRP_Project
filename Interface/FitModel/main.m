@@ -27,7 +27,7 @@ function main
 % A. Pardal
 % R. Santos
 % 
-% Last Update: 30/06/2023
+% Last Update: 01/07/2023
 % 
 % adapted from bcf's teraPro function made in 09-01-2023
 % -------------------------------------------------------------------------
@@ -49,7 +49,7 @@ ModelOptions1 = {0.042 0.037 0.002587 0.00608 1268 0.16;... % initial guess
 ModelOptions2 = {2.03 0.010 0.000666 0.00542 0.65 0.20;...
                  1.99 0.009 0.000647 0.00495 0.59 0.19;...
                  2.07 0.011 0.000692 0.00598 0.71 0.21};
-FitData = {};
+FitData = {};                                               % needed to initialize uitable_ResultFit
 UncertaintyData = {};
 handles.FileNames = {'Data1' 'Data2' 'Data3' 'Data4' 'Data5'};
 %----------                                                     ----------%
@@ -83,7 +83,7 @@ clf,                                                % clear the figure
 
 handles.axes_logo = axes('Parent',mainFig,...
                          'Units','Normalized', ...
-                         'Position',[0.01 0.93 0.14 0.07],...
+                         'Position',[0.08 0.93 0.14 0.07],...
                          'Visible','off');
 tmp=image(tmp);
 set(tmp, 'AlphaData', alfa);
@@ -95,7 +95,7 @@ axis equal off
 
 handles.axes_logo = axes('Parent',mainFig,...
                          'Units','Normalized', ...
-                         'Position',[0.11 0.93 0.14 0.07],...
+                         'Position',[0.001 0.93 0.11 0.07],...
                          'Visible','off');
 tmp=image(tmp);
 set(tmp, 'AlphaData', alfa);
@@ -104,8 +104,8 @@ axis equal off
 %--------------------------------------------------------------------------
 % TEXT AREA
 %--------------------------------------------------------------------------
-dim = [.235 .79 .1 .21]; 
-str = {'RADIANCE_v1.0.0' 'Authors: A. Pardal, R. Pires, R. Santos'...
+dim = [.2 .78 .1 .21]; 
+str = {'RADIANCE_v1.0.0'
        'github.com/RiPires/DTRP_Project.git'};
 annotation('textbox',dim,'String',str,'FitBoxToText','on', 'Interpreter', 'none');
 %----------                                                     ----------%
@@ -220,17 +220,6 @@ handles.uimenu_hp = uimenu(mainFig, ...
     function Help_Callback(~,~)
         open("RADIANCE-Guide_v1.pdf")
     end
-
-%-----------
-% ABOUT
-%-----------
-handles.uimenu_abt = uimenu(mainFig, ...
-        	                'Label',    'About',...
-                            'Callback', @Abt_CB);
-
-    function Abt_CB(~,~)
-        system(['notepad' ' ../../README.md' ' &']); % works on windows
-    end
 %----------                                                     ----------%
 
 %--------------------------------------------------------------------------
@@ -279,10 +268,10 @@ uipushtool(handles.toolbar, ...
                 'RowName',FileList)                                                         
         end
 
-        data(size(data,1)+1,:) = cell(1,7);                 % Add an extra row to the "Userdata" and "Data" properties of the table
-        set(handles.uitable, ...                            % Update them
+        data(size(data,1)+numel(FileNames),:) = cell(1,7);  % Add as many extra rows as the nr of files imported
+        set(handles.uitable, ...                            % to the "Userdata" and "Data" properties of the table
         'Data',     data, ...
-        'Userdata', data);
+        'Userdata', data);                                  % Update them
     end
 
 %----------------------
@@ -706,7 +695,7 @@ handles.pushbutton_Fit = uicontrol(panel_ModelOpt,...
                        ,round(p(5),5)...
                        ,round(p(6),0)...
                        ,round(p(7),5)...
-                       ,round(p(8),5)};
+                       ,round(p(8),5)}
             UncertaintyData = {round(up(1),5)...                                    % Stores uncertainties of the parameters                     
                        ,round(up(2),5)...
                        ,round(up(3),5)...
@@ -714,11 +703,13 @@ handles.pushbutton_Fit = uicontrol(panel_ModelOpt,...
                        ,round(up(5),5)...
                        ,round(up(6),0)...
                        ,round(up(7),5)...
-                       ,round(up(8),5)};
-                       
+                       ,round(up(8),5)}
+
+            Results = [FitData; UncertaintyData; UncertaintyData]           
             set(handles.uitable_ResultFit1,...                                      % Keep fited parameters information
-                'Data', FitData,...                                                 % and displays it on the table
-                'Userdata', FitData)
+                'Data', Results,...                                                 % and displays it on the table
+                'Userdata', Results)
+
             axes(handles.axes_BED);                                                 % Now selects axes_BED
             enableDefaultInteractivity(handles.axes_BED)                            % enables its interactivity
             BED(file_names,data,p,1);                                               % Performs BED calculation (1 is the number of the fit)
@@ -745,9 +736,11 @@ handles.pushbutton_Fit = uicontrol(panel_ModelOpt,...
                        ,round(up(7),5)...
                        ,round(up(8),5)};
 
-            set(handles.uitable_ResultFit2,...                                      % Keeps fited parameters information                           
-                'Data', FitData,...                                                 % and displays it on the table
-                'Userdata', FitData)
+            Results = [FitData; UncertaintyData; UncertaintyData]           
+            set(handles.uitable_ResultFit2,...                                      % Keep fited parameters information
+                'Data', Results,...                                                 % and displays it on the table
+                'Userdata', Results)
+
             axes(handles.axes_BED);                                                 % Selects axes_BED
             enableDefaultInteractivity(handles.axes_BED)                            % enables its interactivity
             BED(file_names,data,p,2);                                               % Performs BED calculation (2 is the number of the fit)
@@ -832,15 +825,28 @@ function PltData(~,~)
             InputData = load(strcat('.\',string(tmp(k)),'.m'));
             Time = InputData(:, 1);
             SR = InputData(:, 2);
-            my_color = rand(1,3);
-            %colors = {'m', 'b', 'k', 'r', 'g', 'c', 'y', '#FF7F50', '#9FE2BF', '#CCCCFF', '#CCD1D1', '#FFF978'};
-            all_marks = {'o','+','*','x','s','d','^','v','>','<','p','h'};
+
+            if numel(InputData(1,:))==2
+                errhigh = zeros(numel(Time),1);
+                errlow = zeros(numel(Time),1);
+            elseif numel(InputData(1,:))==4
+                errhigh = InputData(:,3);
+                errlow = InputData(:,4);
+            end
+            hold on
+            colors = {'m', 'b', 'k', 'r', 'g', 'c', 'y', '#FF7F50', '#9FE2BF', '#CCCCFF', '#CCD1D1', '#FFF978'};
+            markers = {'o','+','*','x','s','d','^','v','>','<','p','h'};
             plot(Time, SR, ...
                 'LineStyle',    'none', ...
-                'Marker',       all_marks{mod(k,12)},...
+                'Marker',       markers{mod(k,12)},...
                 'LineWidth',    2, ...
-                'Color',        my_color, ...
-                'MarkerSize',   6)
+                'Color',        colors{mod(k,12)}, ...
+                'MarkerSize',   6,...
+                'DisplayName',  string(Labels(k)))
+            errorbar(Time,SR,errlow,errhigh, ...
+                     'Color',            colors{mod(k,12)}, ...
+                     'LineStyle',        'none', ...
+                     'HandleVisibility', 'off');
             legend('Location',  'northeast')
             legend('boxoff')
             xlabel('Time (months)')

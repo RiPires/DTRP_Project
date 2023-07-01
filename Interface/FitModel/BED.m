@@ -81,8 +81,16 @@ function BED(file_names,DataDetails,FitData,fnumber)
                 if abs(month-tau(t)) < 2 % if there is a tau thar corresponds to the year in question
                     sr_val = sr(t); % respective SR (%)
                     bed_val = bedfunction(d_values(s),v(2),v(4),D_values(s),v(5),T_day_values(s));
-                    errhigh = data(:,3); % extracting the error bars
-                    errlow = data(:,4); 
+
+                    if numel(data(1,:))==2
+                        errhigh = zeros(numel(tau),1);
+                        errlow = zeros(numel(tau),1);
+                    elseif numel(data(1,:))==4
+                        errhigh = data(:,3);
+                        errlow = data(:,4);
+                    end
+                    %errhigh = data(:,3); % extracting the error bars
+                    %errlow = data(:,4); 
                     pointsyear{m} = vertcat(pointsyear{m}, [bed_val,sr_val,errhigh(t),errlow(t)]);
                 end
             end
