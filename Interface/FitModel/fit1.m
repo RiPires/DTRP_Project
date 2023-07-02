@@ -194,7 +194,9 @@ up = [u_K,u_alpha,u_beta,u_alpha_beta,u_gamma,u_Td,u_a,u_delta];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plotting
+% disp(DataDetails(:,3));
 labels = cell2mat(DataDetails(:,3));
+% disp(labels);
 
 hold on
 x_points = linspace(0, 70, 71);

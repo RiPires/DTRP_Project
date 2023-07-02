@@ -822,7 +822,7 @@ function PltData(~,~)
 
     for k = 1:numel(tmp)
         if select(k) == 1 
-            InputData = load(strcat('.\',string(tmp(k)),'.m'));
+            InputData = load(strcat('./',string(tmp(k)),'.m'));
             Time = InputData(:, 1);
             SR = InputData(:, 2);
 
