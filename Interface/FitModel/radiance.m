@@ -161,7 +161,7 @@ handles.uimenu_fit = uimenu(mainFig, ...
                                      'Callback', @uimenu_fit1_callback);
 
             function uimenu_fit1_callback(~,~)
-                handles.radiobutton_Fit1.Value = 1;
+                handles.radiobutton_Fit1.Value = 1;uitable_ResultFit1
             end
 
         handles.uimenu_fit2 = uimenu(handles.uimenu_model,...
@@ -185,11 +185,11 @@ handles.uimenu_fit = uimenu(mainFig, ...
             if strcmp(SelectedFit, 'on')                                    % If Fit1 is selected
                 Results = cell2table(get(handles.uitable_ResultFit1, 'Userdata'));
                 Results.Properties.VariableNames = ...
-                ["K", "alpha [Gy^-1]", "beta [Gy^-2]", "alpha/beta [Gy]", "gamma", "Td [day]", "a [mon^-1]", "delta"];
+                ["K", "alpha [Gy^-1]", "beta [Gy^-2]", "alpha/beta [Gy]", "gamma", "Td [day]", "a [mon^-1]", "delta", "qui^2/dof"];
             elseif strcmp(SelectedFit, 'off')                               % If Fit2 is selected
                 Results = cell2table(get(handles.uitable_ResultFit2, 'Userdata'));
                 Results.Properties.VariableNames = ...
-                ["K50/K0", "alpha [Gy^-1]", "beta [Gy^-2]", "alpha/beta [Gy]", "gamma", "Td [day]", "sigma_k/K0", "delta"];
+                ["K50/K0", "alpha [Gy^-1]", "beta [Gy^-2]", "alpha/beta [Gy]", "gamma", "Td [day]", "sigma_k/K0", "delta", "qui^2/dof"];
             end
             FileName = inputdlg('Enter file name and extension (.txt, .csv):');
             writetable(Results, string(FileName));                          % write file
