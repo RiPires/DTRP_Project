@@ -144,7 +144,7 @@ handles.uimenu_file = uimenu(mainFig, ...
         end
     
         function uimenu_save_callback(~,~)        
-            uisave('ProgramState.mat')  % Suggested filename
+            uisave() 
         end
 
 %-----------
