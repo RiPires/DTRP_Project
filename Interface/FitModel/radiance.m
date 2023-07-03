@@ -884,7 +884,7 @@ function SavePlot (~,~)
     elseif choice == 2  % If axes BED selected
         fignew = figure('Visible','off','WindowState', 'maximized');    
         newAxes = copyobj(handles.axes_BED,fignew);                     
-        set(newAxes,'Position', [.1 .1 .9 .9], 'Units', 'normalized'); 
+        set(newAxes,'Position', [.1 .1 .88 .88], 'Units', 'normalized'); 
     elseif choice == 3  % If both is selected
         fignew = figure('Visible', 'off', 'WindowState','maximized');
         newAxesTime = copyobj(handles.axes_Time, fignew);
