@@ -1,4 +1,4 @@
-function main
+function radiance
 % HELP: this function launches the RADIANCE: 
 %       Radiotherapy Survival Rate Modeling Interface,
 %       a GUI (Graphical User Interface) to perform
@@ -27,7 +27,7 @@ function main
 % A. Pardal
 % R. Santos
 % 
-% Last Update: 01/07/2023
+% Last Update: 03/07/2023
 % 
 % adapted from bcf's teraPro function made in 09-01-2023
 % -------------------------------------------------------------------------
@@ -65,7 +65,7 @@ set(mainFig ,'Name','RADIANCE: Radiotherapy Survival Rate Modeling Interface',..
     'MenuBar','None');
 clf,                                                % clear the figure
 
-    function figure_keyPressFcn(hObject,eventdata)
+    function figure_keyPressFcn(~,eventdata)
                %%%   !!!   TO DO   !!!   %%% 
         switch eventdata.Key
             case 'return'
@@ -191,7 +191,7 @@ handles.uimenu_fit = uimenu(mainFig, ...
                 Results.Properties.VariableNames = ...
                 ["K50/K0", "alpha [Gy^-1]", "beta [Gy^-2]", "alpha/beta [Gy]", "gamma", "Td [day]", "sigma_k/K0", "delta"];
             end
-            FileName = inputdlg('Enter file name and extension (.m, .txt, .csv):');
+            FileName = inputdlg('Enter file name and extension (.txt, .csv):');
             writetable(Results, string(FileName));                          % write file
         end
 %-----------
@@ -218,7 +218,7 @@ handles.uimenu_hp = uimenu(mainFig, ...
                             'Callback', @Help_Callback);
 
     function Help_Callback(~,~)
-        open("RADIANCE-Guide_v1.pdf")
+        open("RADIANCE-Guide.pdf")
     end
 %----------                                                     ----------%
 
@@ -696,7 +696,7 @@ handles.pushbutton_Fit = uicontrol(panel_ModelOpt,...
                        ,round(p(6),0)...
                        ,round(p(7),5)...
                        ,round(p(8),5)...
-                       ,round(gf,2)}
+                       ,round(gf,2)};
             UncertaintyData = {round(up(1),5)...                                    % Stores uncertainties of the parameters                     
                        ,round(up(2),5)...
                        ,round(up(3),5)...
@@ -705,9 +705,9 @@ handles.pushbutton_Fit = uicontrol(panel_ModelOpt,...
                        ,round(up(6),0)...
                        ,round(up(7),5)...
                        ,round(up(8),5)...
-                       ,'----'}
+                       ,'----'};
 
-            Results = [FitData; UncertaintyData; UncertaintyData]           
+            Results = [FitData; UncertaintyData; UncertaintyData];           
             set(handles.uitable_ResultFit1,...                                      % Keep fited parameters information
                 'Data', Results,...                                                 % and displays it on the table
                 'Userdata', Results)
@@ -740,7 +740,7 @@ handles.pushbutton_Fit = uicontrol(panel_ModelOpt,...
                        ,round(up(8),5)...
                        ,'----'};
 
-            Results = [FitData; UncertaintyData; UncertaintyData]           
+            Results = [FitData; UncertaintyData; UncertaintyData];           
             set(handles.uitable_ResultFit2,...                                      % Keep fited parameters information
                 'Data', Results,...                                                 % and displays it on the table
                 'Userdata', Results)

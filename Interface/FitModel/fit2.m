@@ -160,7 +160,7 @@ alpha = v_min(2);
 u_alpha = u_boot(2);
 
 %beta
-beta = v_min_old(3)
+beta = v_min_old(3);
 u_beta = u_boot(3);
 
 %alpha/beta
@@ -204,7 +204,7 @@ for i = 1:number_studies
     x_plot = [];
     x = data(:,1);
     y = data(:,2);
-    
+
     if numel(data(1,:))==2
         errhigh = zeros(numel(x),1);
         errlow = zeros(numel(x),1);

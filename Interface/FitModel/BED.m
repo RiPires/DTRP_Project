@@ -101,7 +101,7 @@ function BED(file_names,DataDetails,FitData,fnumber)
     %x (BED) - Biologically effective dose (Gy):
     % array with BED values to plot the curves
     T_points_days = linspace(1,100,100); %treatment time in days
-    T_points_months = [] %treatment time in months
+    T_points_months = []; %treatment time in months
     d = 2; %dose per fraction in Gy/fx
     BED_points = []; %BED in Gy
     for i = 1:length(T_points_days)
