@@ -379,12 +379,21 @@ handles.uitable = uitable(handles.panel_DataDetails,...
 
         if indices(2) > 3                                 % If a cell in columns 4, 5, 6 or 7 changes 
             if ~isnan(input)                            % check if it's not NaN 
-                if (indices(2) == 4 || indices(2) == 7)... % If a cell in columns 4 or 7 changes
+                if indices(2) == 7 ... % If a cell in columns 4 or 7 changes
                     && rem(2*input,2) ~=0                  % and it's not integer                           
                     warndlg(['Are you sure this is the correct input? ' ...
                              'Tipicaly, the number of patients in the study,' ...
                              ' and the total treament time are positive, ' ...
                              'non-zero, integer values.'], 'Input Warning')
+
+                elseif indices(2) == 4 && rem(2*input,2) ~=0
+                    prevState = get(hObject, 'Userdata');   % gets previous state of the table stored in the Userdata
+                    set(hObject, 'Data', prevState)         % updates the data in the table back to the previous state, before editing
+                    errordlg(['There is no such thing as non-integer patients! ' ...
+                              'Tipicaly, the number of patients in the study,' ...
+                              ' and the total treament time are positive, ' ...
+                              'non-zero, integer values.'], 'Invalid Input')
+                
                 elseif (indices(2) == 4 || indices(2) == 5 ||... % If a cell in the columns 4, 5,
                     indices(2) == 6 || indices(2) == 7)...   % 6 or 7 changes
                     && input <= 0                            % and it's not positive
@@ -866,12 +875,12 @@ end
 
 function SavePlot (~,~)
     choice = menu('Axes to save:','SR vs Time','SR vs BED', 'Both');
-    FileName = inputdlg('Enter file name and extension (.png, .pdf, .jpg, .fig, .m, .jpeg, .svg):');
+    FileName = inputdlg('Enter file name and extension (.png, .pdf, .jpg, .fig, .jpeg, .svg):');
     
     if choice == 1      % If axes time selected
         fignew = figure('Visible','off','WindowState', 'maximized');    % Invisible figure
         newAxes = copyobj(handles.axes_Time,fignew);                    % Copy the appropriate axes
-        set(newAxes,'Position', [.1 .1 .9 .9], 'Units', 'normalized');  % The original position is copied too, so adjust it.
+        set(newAxes,'Position', [.1 .1 .88 .88], 'Units', 'normalized');  % The original position is copied too, so adjust it.
     elseif choice == 2  % If axes BED selected
         fignew = figure('Visible','off','WindowState', 'maximized');    
         newAxes = copyobj(handles.axes_BED,fignew);                     
