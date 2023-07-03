@@ -45,7 +45,8 @@ end
     %v(6) - delta 
 
 % Initial parameter values - defined by the user
-v0 = [0.042, 0.037, 0.002587, 0.00608, 1268, 0.16];
+%v0 = [0.042, 0.037, 0.002587, 0.00608, 1268, 0.16];
+v0 = [0.042, 0.037, 0.0026, 0.0061, 1268, 0.16];
 
 % Define the parameter bounds
 lb = [0, 0, 0, 0, 1000, 0];

@@ -123,7 +123,7 @@ end
 
 % Uncertainties given by the Bootstrapping
 
-u_boot = zeros(n_param); % array to store the uncertainties of the fitting parameters
+u_boot = zeros(n_param); % array to store the uncertainties of the fitting parameters.                           
 CI_u = zeros(n_param); % array to store the upper value of the confidence intervals of the fitting parameters
 CI_l = zeros(n_param); % array to store the lower value of the confidence intervals of the fitting parameters
 
