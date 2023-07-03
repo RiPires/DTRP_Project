@@ -9,13 +9,13 @@ class of 2022/2023.
 
 # Authors: 
               R. Matoza Pires - fc49807@alunos.fc.ul.pt
-              A. Pardal - fc51387@alunos.fc.ul.pt
-              R. Santos
+              A. Pardal       - fc51387@alunos.fc.ul.pt
+              R. Santos       - fc54741@alunos.fc.ul.pt
 
 # Supervisor:
               Prof. Dr. Brígida C. Ferreira
 
-# Last Update: 22/06/2023 
+# Last Update: 03/07/2023 
   Program under development using the latest versions of MATLAB: R2023a and R2022b
 # --------------------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ The folder "code" contains the files related with the fitting functions of the p
 The folder "Interface" contains the files dedicated to the development of the grafical interface of the program:
 
   "FitModel" contains the latest/stable version of the program, that include the previously mentioned files;
-  # !!!   To launch the interface run the "main.m" script in MATLAB   !!! #
+  # !!!   To launch the interface run the "radiance.m" script in MATLAB   !!! #
 
   "dev" is a development folder, containing an old/not-stable version of the program;
   
