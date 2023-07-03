@@ -838,12 +838,12 @@ function PltData(~,~)
     cla(handles.axes_Time, 'reset')         %reset plot
     axes(handles.axes_Time);                %Select "Time" axes  
 
-    if numel(tmp) == 0                      % If there are no data
-        warndlg('No data to show!', 'Plot Warning')
+    if numel(tmp) == 0
+        warndlg('No d')
     else
         for k = 1:numel(tmp)
             if cell2mat(select(k)) == 1 
-                InputData = load(strcat('./',string(tmp(k)),'.m')); 
+                InputData = load(strcat('./',string(tmp(k)),'.m'));
                 Time = InputData(:, 1);
                 SR = InputData(:, 2);
     
@@ -863,7 +863,7 @@ function PltData(~,~)
                     'LineWidth',    2, ...
                     'Color',        colors{mod(k,12)}, ...
                     'MarkerSize',   6, ...
-                    'DisplayName',  string(tmp(k)))             % Uses the name of the file
+                    'DisplayName',  string(tmp(k)))
                 errorbar(Time,SR,errlow,errhigh, ...
                          'Color',            colors{mod(k,12)}, ...
                          'LineStyle',        'none', ...
