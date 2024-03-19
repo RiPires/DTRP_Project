@@ -2,7 +2,7 @@ function result = fit2bed(BED,tau,v,T_day)
 % function fit2bed
 % HELP: this function returns the value of the survival rate for a given 
 % value of BED for the second fitting function
-% for a given value of BED and 
+% 
 %
 % INPUT
 % * BED: Biologically Effective Dose (Gy)
@@ -12,7 +12,9 @@ function result = fit2bed(BED,tau,v,T_day)
 %
 % OUTPUT
 % * SR: Survival Rate (%)
-%
+% -------------------------------------------------------------------------
+% made by A. Pardal, R. Pires, and R. Santos in 2023
+% -------------------------------------------------------------------------
 
     %v(1) - K50/K0
     %v(2) - alpha Gy^-1
@@ -33,4 +35,4 @@ function result = fit2bed(BED,tau,v,T_day)
     else
         result = NaN;
     end
-end 
+end

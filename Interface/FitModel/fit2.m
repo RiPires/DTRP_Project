@@ -1,4 +1,4 @@
-function [p,up,goodfit] = fit2(file_names, DataDetails, Bounds)
+function [p,up,goodfit] = fit2(file_names, DataDetails, Bounds) 
 % function fit2
 % HELP: this function returns the results of the second fit - parameters, their uncertainties and plot(s)
 %
@@ -9,6 +9,9 @@ function [p,up,goodfit] = fit2(file_names, DataDetails, Bounds)
 %    * D - prescription dose (Gy)
 %    * d - dose per fraction (Gy/fx)
 %    * T_day - treatment time (days)
+%   and characteristics of the selected points:
+%    * Color
+%    * Marker
 %
 % * Bounds: Initial parameter values and bounds of the fitting parameters
 %
@@ -16,18 +19,49 @@ function [p,up,goodfit] = fit2(file_names, DataDetails, Bounds)
 % * p: vector that contains the fitting parameters (K50/K0, alpha, beta, alpha_beta, gamma, Td, sigmak_K0, delta)
 % * up: vector that contains the uncertainties of the fitting parameters
 % * goodfit: goodness of the fit
-%
-%
+% -------------------------------------------------------------------------
+% made by A. Pardal, R. Pires, and R. Santos in 2023
+% last update: 04/03/2024
+% -------------------------------------------------------------------------
 
 
 % Data from the files:
 %x (tau) - elapsed time in months
 %y (SR) - survival rate in percentage
 
-N_values = cell2mat(DataDetails(:,4));      % N - number of patients
-D_values = cell2mat(DataDetails(:,5));      % D - prescription dose Gy
-d_values = cell2mat(DataDetails(:,6));      % d - dose per fraction Gy/fx
-T_day_values = cell2mat(DataDetails(:,7));  % T_day - treatment time in days
+N_values = cell2mat(DataDetails(:,3));      % N - number of patients
+D_values = cell2mat(DataDetails(:,4));      % D - prescription dose Gy
+d_values = cell2mat(DataDetails(:,5));      % d - dose per fraction Gy/fx
+T_day_values = cell2mat(DataDetails(:,6));  % T_day - treatment time in days
+
+
+colors = DataDetails(:,7);
+% Color map
+colorsNames = {'red', 'electric green', 'blue', 'cyan', 'magenta', 'yellow', 'black', ...
+    'orange', 'purple', 'pink', 'gray', 'bordeaux', 'dark green', 'dark yellow', 'brown'};
+colorsHex = {'#FF0000', '#00FF00', '#0000FF', '#00FFFF', '#FF00FF', '#FFFF00', ...
+    '#000000', '#D95319', '#7E2F8E', '#FFC0CB', '#808080', '#A2142F', '#006400', ...
+    '#EDB120', '#A52A2A'};
+colorMap = containers.Map(colorsNames, colorsHex);
+% Convert the colors array to a clean array of color names
+selectedColors = cellfun(@strtrim, colors, 'UniformOutput', false);
+% Convert selected color names to their respective hex codes
+selectedHexCodes = cellfun(@(x) colorMap(x), selectedColors, 'UniformOutput', false);
+
+markers = DataDetails(:,8);
+% Markers map
+markersNames = {'circle' 'plus sign' 'asterisk' 'point' 'cross' 'horizontal line' ... 
+                    'vertical line' 'square' 'diamond' 'upward-pointing triangle' ... 
+                    'downward-pointing triangle' 'right-pointing triangle' ...
+                    'left-pointing triangle' 'pentagram' 'hexagram'};
+markersSym = {'o' '+' '*' '.' 'x' '_' '|' 'square' 'diamond' ...
+                    '^' 'v' '>' '<' 'pentagram' 'hexagram'};
+markerMap = containers.Map(markersNames, markersSym);
+% Convert the markers array to a clean array of markers names
+selectedMarkers = cellfun(@strtrim, markers, 'UniformOutput', false);
+% Convert selected markers names to their respective symbols
+selectedSymbols = cellfun(@(x) markerMap(x), selectedMarkers, 'UniformOutput', false);
+               
 
 T_month_values = zeros(size(T_day_values)); %T_month  - treatment time in months
 for i = 1:length(T_day_values)
@@ -36,6 +70,8 @@ for i = 1:length(T_day_values)
 end 
 
 number_studies = numel(file_names);
+disp('file_names:')
+disp(file_names);
 n_param = 6; %n_param - number of fitting parameters
 
 n_points = 0; %n_points - number of points from all the files
@@ -73,6 +109,7 @@ f = @(x,v,d,D,T_day) secondfitting(x,v,d,D,T_day,'fitting');
     % fval: value of the chi-square function
 
 [v_min_old,v_min,fval] = perform_fit2(file_names,N_values,d_values,D_values,T_day_values,T_month_values,v0,lb,ub,f,'fitting',2);
+
 
 %v_min - vector with found parameters 
     %v_min(1) - K 
@@ -189,14 +226,11 @@ up = [u_K50_K0,u_alpha,u_beta,u_alpha_beta,u_gamma,u_Td,u_sigmak_K0,u_delta];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plotting
-labels = cell2mat(DataDetails(:,3));
+labels = cell2mat(DataDetails(:,2)); % Author's names
 
 hold on
 x_points = linspace(1, 70, 71);
 
-colors = {'m', 'b', 'k', 'r', 'g', 'c', 'y', '#FF7F50', '#9FE2BF', '#CCCCFF', '#CCD1D1', '#FFF978'};
-% studies_names = {'Liang','Dawson','SeongH','SeongM','SeongL'};
-markers = {'o','+','*','x','s','d','^','v','>','<','p','h'};
 
 for i = 1:number_studies
     data = load(file_names{i});
@@ -214,15 +248,15 @@ for i = 1:number_studies
     end
 
     %original points
-    plot(x, y, markers{i}, ...
+    plot(x, y, selectedSymbols{i}, ...
          'LineWidth',   2, ...
-         'Color',       colors{i}, ...
-         'Marker',       markers(i), ...
+         'Color',       selectedHexCodes{i}, ...
+         'Marker',      selectedSymbols{i}, ...
          'MarkerSize',  6, ...
          'DisplayName', string(labels(i,:)))
 
     errorbar(x,y,errlow,errhigh, ...
-             'Color',           colors{i}, ...
+             'Color',           selectedHexCodes{i}, ...
              'LineStyle',        'none', ...
              'HandleVisibility', 'off');
 
@@ -237,7 +271,7 @@ for i = 1:number_studies
     end
     plot(x_plot, y_plot, '--', ...
          'LineWidth', 2, ...
-         'Color', colors{i}, ...
+         'Color', selectedHexCodes{i}, ...
          'HandleVisibility', 'off')
     hold on;
 end

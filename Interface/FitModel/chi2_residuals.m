@@ -19,9 +19,17 @@ function r = chi2_residuals(files, N_list, d_list, D_list, T_day_list, T_month_l
 %
 % OUTPUT
 % * fitting chi2 residuals (r): residuals of the chi2 function
-%
-%
+% -------------------------------------------------------------------------
+% made by A. Pardal, R. Pires, and R. Santos in 2023
+% -------------------------------------------------------------------------
+
     s = 0; %sum for all the points of all the files
+    
+    %disp('files:');
+    %disp(files);
+    %disp('lenght files:');
+    %disp(length(files));
+    
     for i = 1:length(files)
         if strcmp(purpose, 'fitting')
             data = load(files{i});

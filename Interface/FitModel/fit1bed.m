@@ -2,7 +2,7 @@ function result = fit1bed(BED,tau,v,T_month)
 % function fit1bed
 % HELP: this function returns the value of the survival rate for a given 
 % value of BED for the first fitting function
-% for a given value of BED and 
+% 
 %
 % INPUT
 % * BED: Biologically Effective Dose (Gy)
@@ -12,7 +12,9 @@ function result = fit1bed(BED,tau,v,T_month)
 %
 % OUTPUT
 % * SR: Survival Rate (%)
-%
+% -------------------------------------------------------------------------
+% made by A. Pardal, R. Pires, and R. Santos in 2023
+% -------------------------------------------------------------------------
 
     %v(1) - K 
     %v(2) - alpha Gy^-1
